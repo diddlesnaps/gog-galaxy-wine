@@ -111,7 +111,7 @@ parts:
       ## wine loaders - this one is the native system architecture
       DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel-${ARCH}_3.9.0~xenial_${ARCH}.deb"
 
-      if [ "$SNAP_ARCH" = "amd64" ]; then
+      if [ "$ARCH" = "amd64" ]; then
         ## on amd64 builds we need to also bundle the i386 wine loaders
         DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel-i386_3.9.0~xenial_i386.deb"
       fi
