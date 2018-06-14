@@ -102,12 +102,14 @@ parts:
     override-build: |
       snapcraftctl build
 
+      ARCH="$(dpkg --print-architecture)"
+
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
-      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel_3.9.0~xenial_${SNAP_ARCH}.deb"
+      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel_3.9.0~xenial_${ARCH}.deb"
 
       ## wine loaders - this one is the native system architecture
-      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel-${SNAP_ARCH}_3.9.0~xenial_${SNAP_ARCH}.deb"
+      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel-${ARCH}_3.9.0~xenial_${ARCH}.deb"
 
       if [ "$SNAP_ARCH" = "amd64" ]; then
         ## on amd64 builds we need to also bundle the i386 wine loaders
