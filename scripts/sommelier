@@ -204,13 +204,14 @@ if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
   fi
 fi
 
-VERSION=$(cat $SNAP_USER_COMMON/.lastversion)
+VERSION=""
+[ -f "$SNAP_USER_COMMON" ] && VERSION="$(cat "$SNAP_USER_COMMON/.lastversion")"
 
 # Launch wineboot/winecfg/winetricks if requested.
 # If the executable exists then launch it otherwise install it then lauch it.
 if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${WINE_EXE} = *"winetricks"* ]]; then
   "${WINE_EXE}" "$@"
-elif [ ! -e "${WINE_EXE}" -o "$VERSION" != "$(cat $SNAP/version)" ];
+elif [ ! -e "${WINE_EXE}" -o "$VERSION" != "$(cat $SNAP/version)" ]; then
   cp $SNAP/version $SNAP_USER_COMMON/.lastversion
   install_app
 else
