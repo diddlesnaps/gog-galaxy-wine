@@ -6,8 +6,8 @@ summary: GOG Galaxy
 description: |
  GOG Galaxy
  .
- run `snap connect gog-galaxy:hardware-observe`, and
-     `snap connect gog-galaxy:process-control`.
+ run `snap connect gog-galaxy-wine:hardware-observe`, and
+     `snap connect gog-galaxy-wine:process-control`.
 
 grade: stable
 confinement: strict
@@ -88,7 +88,7 @@ parts:
       - no-system-libraries
     override-build: |
       snapcraftctl build
-      if [ "$SNAP_ARCH" = "amd64" ]; then
+      if [ "$SNAPCRAFT_ARCH_TRIPLET" = "x86_64-linux-gnu" ]; then
         dpkg --add-architecture i386
         apt update
       fi
@@ -97,6 +97,8 @@ parts:
     plugin: nil
     build-attributes:
       - no-system-libraries
+    build-packages:
+      - wget
     override-build: |
       snapcraftctl build
 
@@ -257,6 +259,8 @@ parts:
       'sommelier': bin/
       'winetricks': bin/
       'zenity': bin/
+    build-packages:
+      - wget
     stage-packages:
       - cabextract         # winetricks
       - libgdk-pixbuf2.0-0 # yad
