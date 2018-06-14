@@ -3,12 +3,8 @@
 function install_app() {
   # Install additional requirements via winetricks here
   if [ -n "${TRICKS}" ]; then
-    i=0
-    COUNT=${#TRICKS[@]}
     for TRICK in ${TRICKS}; do
-      i=$(expr $i + 1)
       env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINETRICKS}" --unattended ${TRICK}
-      echo $((100*$i/${COUNT}))
     done | yad --progress --title="Installing required libraries" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
   fi
 
@@ -36,7 +32,7 @@ function launch_app() {
   if [ "$(basename "$WINE_EXE")" == "GalaxyClient.exe" ]; then
     env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINEPREFIX}/drive_c/users/Public/GOG.com/Galaxy/redists/GalaxyCommunication.exe" &
   fi
-  env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINE_EXE}" $WINE_EXE_ARGS
+  exec env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINE_EXE}" $WINE_EXE_ARGS
 }
 
 function prepend_dir() {
@@ -208,12 +204,15 @@ if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
   fi
 fi
 
+VERSION=$(cat $SNAP_USER_COMMON/.lastversion)
+
 # Launch wineboot/winecfg/winetricks if requested.
 # If the executable exists then launch it otherwise install it then lauch it.
 if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${WINE_EXE} = *"winetricks"* ]]; then
   "${WINE_EXE}" "$@"
-elif [ -e "${WINE_EXE}" ]; then
-  launch_app
-else
+elif [ ! -e "${WINE_EXE}" -o "$VERSION" != "$(cat $SNAP/version)" ];
+  cp $SNAP/version $SNAP_USER_COMMON/.lastversion
   install_app
+else
+  launch_app
 fi
