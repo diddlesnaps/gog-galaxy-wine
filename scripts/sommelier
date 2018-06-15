@@ -1,5 +1,12 @@
 #!/bin/bash
 
+TITLE="GOG Galaxy"
+NOTICE="The ${TITLE} snap is experimental, built
+with development releases of upstream WINE and may not function
+as expected.\n\nIf you encounter issues please report them on the
+${TITLE} snap issue tracker:
+\n\nhttps://github.com/diddledan/gog-galaxy-wine-snap/issues"
+
 function install_app() {
   # Install additional requirements via winetricks here
   if [ -n "${TRICKS}" ]; then
@@ -13,7 +20,7 @@ function install_app() {
     # Downloads a file with progress using wget and yad
     wget "${INSTALL_URL}" -O "${TMPDIR}/${INSTALL_EXE}" 2>&1 | \
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
-    yad --progress --title="${INSTALL_EXE}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top
+    yad --progress --title="${INSTALL_EXE}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --no-escape
     # Installs the wine application
     env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${TMPDIR}/${INSTALL_EXE}" /silent
     # Removes the cached installer
@@ -29,10 +36,21 @@ function install_app() {
 function launch_app() {
   # If we don't change into the program directory some assets may not be found
   cd "${WINE_DIR}"
+
   if [ "$(basename "$WINE_EXE")" == "GalaxyClient.exe" ]; then
     env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINEPREFIX}/drive_c/users/Public/GOG.com/Galaxy/redists/GalaxyCommunication.exe" &
   fi
-  exec env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINE_EXE}" $WINE_EXE_ARGS
+
+  # Only use virtual desktop if it has been requested and we're running Xorg
+  if [ "${XDG_SESSION_TYPE}" == "x11" ] && [ "${VIRTDESKTOP}" == "1" ]; then
+    # Get the native resolution of the primary display.
+    # Creating a virtual desktop the same size will eliminate bugs when
+    # switching from fullscreen to windowed mode.
+    NATIVE_RES=$(xrandr -q | grep primary | cut -d' ' -f4 | cut -d'+' -f1)
+    exec env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" explorer /desktop="virtual","${NATIVE_RES}" "${WINE_EXE}" $WINE_EXE_ARGS
+  else
+    exec env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINE_EXE}" $WINE_EXE_ARGS
+  fi
 }
 
 function prepend_dir() {
@@ -76,6 +94,12 @@ fi
 # # We need to handle that case and reset $SNAP
 SNAP=`echo $SNAP | sed -e "s|/var/lib/snapd||g"`
 
+export GTK_MODULES=""
+
+if [ -n "${DLLOVERRIDES}" ]; then
+  export WINEDLLOVERRIDES="${DLLOVERRIDES}"
+fi
+
 if [ "$SNAP_ARCH" == "amd64" ]; then
   export WINEARCH=win64
   export WINE=wine64
@@ -96,8 +120,7 @@ export WINESERVER=$SNAP/bin/wineserver
 export WINETRICKS=$SNAP/bin/winetricks
 export winepath=$SNAP/bin/winepath
 export WINEPREFIX="$SNAP_USER_COMMON/.wine"
-# Prevent the pop-ups about Wine Mono and Wine Gecko
-export WINEDLLOVERRIDES="mshtml="
+
 #export WINEDEBUG=-all
 export LD_LIBRARY_PATH="$SNAP/lib:$SNAP/lib/$ARCH:$SNAP/usr/lib:$SNAP/usr/lib/$ARCH:$LD_LIBRARY_PATH"
 
@@ -130,6 +153,10 @@ append_dir LD_LIBRARY_PATH /var/lib/snapd/lib/gl
 
 # Pulseaudio export
 append_dir LD_LIBRARY_PATH $SNAP/usr/lib/$ARCH/pulseaudio
+
+# EGL vendor files on glvnd enabled systems
+[ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ] && \
+append_dir __EGL_VENDOR_LIBRARY_DIRS /var/lib/snapd/lib/glvnd/egl_vendor.d
 
 # Tell GStreamer where to find its plugins
 export GST_PLUGIN_PATH=$SNAP/usr/lib/$ARCH/gstreamer-1.0
@@ -195,6 +222,9 @@ fi
 
 # Initialise wine
 if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
+  # Splash
+  yad --timeout=15 --timeout-indicator=bottom --text="${NOTICE}" --no-escape --width=460 --center --no-buttons --splash --on-top &
+  # Create the WINE environment
   env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" wineboot --init 2>&1 | \
   yad --progress --title="Preparing Windows environment" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
   # Opt out of winetricks metrics - we ninja this to avoid dialogs
@@ -202,17 +232,16 @@ if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
     mkdir -p "${XDG_CACHE_HOME}/winetricks"
     echo 0 > "${XDG_CACHE_HOME}/winetricks/track_usage"
   fi
+else
+  # Notification
+  notify-send --icon "${SNAP}/meta/gui/gog-galaxy.png" --expire-time=15000 "${TITLE}" "${NOTICE}"
 fi
-
-VERSION=""
-[ -f "$SNAP_USER_COMMON" ] && VERSION="$(cat "$SNAP_USER_COMMON/.lastversion")"
 
 # Launch wineboot/winecfg/winetricks if requested.
 # If the executable exists then launch it otherwise install it then lauch it.
 if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${WINE_EXE} = *"winetricks"* ]]; then
   "${WINE_EXE}" "$@"
-elif [ ! -e "${WINE_EXE}" -o "$VERSION" != "$(cat $SNAP/version)" ]; then
-  cp $SNAP/version $SNAP_USER_COMMON/.lastversion
+elif [ ! -e "${WINE_EXE}" ]; then
   install_app
 else
   launch_app

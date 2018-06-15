@@ -22,6 +22,7 @@ apps:
     environment:
       TRICKS: "corefonts vcrun2015 d3dx11_43"
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
       LC_ALL: "C.UTF-8"
     plugs:
       - desktop
@@ -40,6 +41,7 @@ apps:
     command: bin/sommelier "$WINEPREFIX/drive_c/users/Public/GOG.com/Galaxy/redists/GalaxyCommunication.exe"
     environment:
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
       LC_ALL: "C.UTF-8"
     plugs:
       - desktop
@@ -58,6 +60,12 @@ apps:
     command: bin/sommelier $SNAP/bin/wineboot
     environment:
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+    plugs:
+      - desktop
+      - desktop-legacy
+      - pulseaudio
+      - wayland
+      - x11
   winecfg:
     command: bin/sommelier $SNAP/bin/winecfg
     environment:
@@ -98,22 +106,25 @@ parts:
     build-attributes:
       - no-system-libraries
     build-packages:
+      - dpkg
       - wget
     override-build: |
       snapcraftctl build
 
       ARCH="$(dpkg --print-architecture)"
+      WINE_REL="wine-devel"
+      WINE_VER="3.10.0"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
-      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel_3.9.0~xenial_${ARCH}.deb"
+      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/pool/main/${WINE_REL}_${WINE_VER}~xenial_${ARCH}.deb"
 
       ## wine loaders - this one is the native system architecture
-      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel-${ARCH}_3.9.0~xenial_${ARCH}.deb"
+      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/${WINE_REL}-${ARCH}_${WINE_VER}~xenial_${ARCH}.deb"
 
       if [ "$ARCH" = "amd64" ]; then
         ## on amd64 builds we need to also bundle the i386 wine loaders
-        DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/wine-devel-i386_3.9.0~xenial_i386.deb"
+        DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/${WINE_REL}-i386_${WINE_VER}~xenial_i386.deb"
       fi
 
       for DEB_URL in ${DEB_URLS}; do
@@ -126,7 +137,7 @@ parts:
       done
 
       # Organise and cleanup
-      cp -a ${SNAPCRAFT_PART_INSTALL}/opt/wine-devel/* ${SNAPCRAFT_PART_INSTALL}/
+      cp -a ${SNAPCRAFT_PART_INSTALL}/opt/${WINE_REL}/* ${SNAPCRAFT_PART_INSTALL}/
       rm -rf ${SNAPCRAFT_PART_INSTALL}/opt
       rm -rf ${SNAPCRAFT_PART_INSTALL}/share/applications
       rm -rf ${SNAPCRAFT_PART_INSTALL}/share/man
@@ -239,6 +250,9 @@ parts:
         - samba-libs:i386
     override-build: |
       snapcraftctl build
+      rm -rf $SNAPCRAFT_PART_INSTALL/etc/init
+      rm -rf $SNAPCRAFT_PART_INSTALL/etc/init.d
+      rm -rf $SNAPCRAFT_PART_INSTALL/etc/logrotate.d
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/apps
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/applications
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/bug
@@ -273,6 +287,7 @@ parts:
       - unzip              # winetricks
       - wget               # winetricks
       - yad                # winetricks
+      - x11-xserver-utils  # for xrandr to set virtual desktop
     override-build: |
       snapcraftctl build
 
@@ -302,6 +317,7 @@ parts:
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/info
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/kde4
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/lintian
+      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/menu
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/man
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/perl5
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/pixmaps
