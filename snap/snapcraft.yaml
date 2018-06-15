@@ -285,6 +285,7 @@ parts:
       - libgdk-pixbuf2.0-0 # yad
       - libgtk-3-0         # yad
       - libnotify4         # yad
+      - libnotify-bin      # sommelier
       - perl-base          # winetricks
       - shared-mime-info
       - unzip              # winetricks
