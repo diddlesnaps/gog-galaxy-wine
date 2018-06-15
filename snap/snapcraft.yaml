@@ -20,7 +20,7 @@ apps:
     command: env INSTALL_URL="https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_$(cat $SNAP/version).exe"
       $SNAP/bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
     environment:
-      TRICKS: "corefonts vcrun2015 d3dx11_43"
+      TRICKS: "corefonts vcrun2015"
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
       DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
       LC_ALL: "C.UTF-8"
@@ -60,6 +60,7 @@ apps:
     command: bin/sommelier $SNAP/bin/wineboot
     environment:
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
     plugs:
       - desktop
       - desktop-legacy
@@ -70,6 +71,7 @@ apps:
     command: bin/sommelier $SNAP/bin/winecfg
     environment:
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
     plugs:
       - desktop
       - desktop-legacy
@@ -80,6 +82,7 @@ apps:
     command: bin/sommelier $SNAP/bin/winetricks prefix="$WINEPREFIX"
     environment:
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
       LC_ALL: "C.UTF-8"
     plugs:
       - desktop
