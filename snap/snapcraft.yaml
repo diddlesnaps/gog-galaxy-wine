@@ -20,7 +20,7 @@ apps:
     command: env INSTALL_URL="https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_$(cat $SNAP/version).exe"
       $SNAP/bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
     environment:
-      TRICKS: "corefonts vcrun2015"
+      TRICKS: "corefonts vcrun2015 win7"
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
       DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
       LC_ALL: "C.UTF-8"

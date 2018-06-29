@@ -153,6 +153,9 @@ append_dir LD_LIBRARY_PATH /var/lib/snapd/lib/gl
 
 # Pulseaudio export
 append_dir LD_LIBRARY_PATH $SNAP/usr/lib/$ARCH/pulseaudio
+if [ "$SNAP_ARCH" == "amd64" ]; then
+    append_dir LD_LIBRARY_PATH $SNAP/usr/lib/i386-linux-gnu/pulseaudio
+fi
 
 # EGL vendor files on glvnd enabled systems
 [ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ] && \
