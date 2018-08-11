@@ -1,11 +1,39 @@
 #!/bin/bash
 
 TITLE="GOG Galaxy"
-NOTICE="The ${TITLE} snap is experimental, built
-with development releases of upstream WINE and may not function
-as expected.\n\nIf you encounter issues please report them on the
-${TITLE} snap issue tracker:
-\n\nhttps://github.com/diddledan/gog-galaxy-wine-snap/issues"
+NOTICE="The ${TITLE} snap is experimental, built with development releases of upstream WINE and may not function as expected.
+
+If you encounter issues please report them on the ${TITLE} snap issue tracker:
+
+https://github.com/diddlesnaps/gog-galaxy-wine/issues"
+
+# https://stackoverflow.com/questions/4023830/how-to-compare-two-strings-in-dot-separated-version-format-in-bash
+vercomp() {
+    if [[ $1 == $2 ]]
+    then
+        return 1
+    fi
+    local IFS=.
+    local i ver1=($1) ver2=($2)
+    # fill empty fields in ver1 with zeros
+    for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+    do
+        ver1[i]=0
+    done
+    for ((i=0; i<${#ver1[@]}; i++))
+    do
+        if [[ -z ${ver2[i]} ]]
+        then
+            # fill empty fields in ver2 with zeros
+            ver2[i]=0
+        fi
+        if ((10#${ver1[i]} < 10#${ver2[i]}))
+        then
+            return 0
+        fi
+    done
+    return 1
+}
 
 function install_app() {
   # Install additional requirements via winetricks here
@@ -21,12 +49,16 @@ function install_app() {
     wget "${INSTALL_URL}" -O "${TMPDIR}/${INSTALL_EXE}" 2>&1 | \
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
     yad --progress --title="${INSTALL_EXE}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --no-escape
+
     # Installs the wine application
     env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${TMPDIR}/${INSTALL_EXE}" /silent
+
     # Removes the cached installer
     rm -v "${TMPDIR}/${INSTALL_EXE}"
 
     env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${SNAP}/GalaxyRedist.exe" /silent
+
+    cp "$SNAP/version" "$SNAP_USER_COMMON/version"
 
     # Launch after install.
     launch_app
@@ -226,10 +258,10 @@ fi
 # Initialise wine
 if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
   # Splash
-  yad --timeout=15 --timeout-indicator=bottom --text="${NOTICE}" --no-escape --width=460 --center --no-buttons --splash --on-top &
+  yad --timeout=15 --timeout-indicator=bottom --text="${NOTICE}" --image="$SNAP/meta/gui/gog-galaxy.png" --no-escape --width=460 --center --no-buttons --splash &
   # Create the WINE environment
   env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" wineboot --init 2>&1 | \
-  yad --progress --title="Preparing Windows environment" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
+  yad --progress --title="Preparing Windows environment" --width=400 --center --no-buttons --auto-close --auto-kill --pulsate
   # Opt out of winetricks metrics - we ninja this to avoid dialogs
   if [ ! -f "${XDG_CACHE_HOME}/winetricks/track_usage" ]; then
     mkdir -p "${XDG_CACHE_HOME}/winetricks"
@@ -244,7 +276,7 @@ fi
 # If the executable exists then launch it otherwise install it then lauch it.
 if [[ ${WINE_EXE} = *"winecfg"* ]] || [[ ${WINE_EXE} = *"wineboot"* ]] || [[ ${WINE_EXE} = *"winetricks"* ]]; then
   "${WINE_EXE}" "$@"
-elif [ ! -e "${WINE_EXE}" ]; then
+elif [ ! -e "${WINE_EXE}" -o ! -f "$SNAP_USER_COMMON/version" ] || vercomp "$(cat $SNAP_USER_COMMON/version)" "$(cat $SNAP/version)"; then
   install_app
 else
   launch_app

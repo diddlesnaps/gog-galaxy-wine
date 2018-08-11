@@ -3,11 +3,22 @@ version: latest
 version-script: |
   cat $SNAPCRAFT_STAGE/version
 summary: GOG Galaxy
-description: |
- GOG Galaxy
- .
- run `snap connect gog-galaxy-wine:hardware-observe`, and
-     `snap connect gog-galaxy-wine:process-control`.
+description: >
+  The gaming Client designed for a convenient purchasing, playing and updating
+  games, as well as an online play between gaming platforms, GOG Galaxy is also
+  built with optionality in mind, and a belief that you should own the games you
+  buy.
+
+  This is the Windows version running via WINE. It is experimental. Some games
+  may not work correctly, or at all. Your mileage may vary.
+
+  Some games might require you to run
+  `snap connect gog-galaxy-wine:hardware-observe`, and/or
+  `snap connect gog-galaxy-wine:process-control` in a terminal (or use the
+  Software Centre in Ubuntu 18.04 to toggle "Access to hardware information"
+  and/or "Pause ro end any process on the system") to grant extra permissions
+  for the application. Though all the games tested so far do not need these
+  permissions.
 
 grade: stable
 confinement: strict
@@ -116,7 +127,7 @@ parts:
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
-      WINE_VER="3.11.0"
+      WINE_VER="3.13.0"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
