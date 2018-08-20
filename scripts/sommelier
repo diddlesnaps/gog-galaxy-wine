@@ -247,11 +247,12 @@ if [ -f $SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders ] && [ ! -f 
   $SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders > $GDK_PIXBUF_MODULE_FILE
 fi
 
-# Stop wine from updating $WINEPREFIX automatically
+# Don't Stop wine from updating $WINEPREFIX automatically
 if [ -f "${WINEPREFIX}/.update-timestamp" ]; then
   chkstmp=$(grep disable "${WINEPREFIX}/.update-timestamp" | wc -l)
-  if [ $chkstmp -eq 0 ]; then
-    echo "disable" > "${WINEPREFIX}/.update-timestamp"
+  if [ $chkstmp -eq 1 ]; then
+    # echo "disable" > "${WINEPREFIX}/.update-timestamp"
+    rm "${WINEPREFIX}/.update-timestamp"
   fi
 fi
 

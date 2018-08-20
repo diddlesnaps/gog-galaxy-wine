@@ -127,7 +127,7 @@ parts:
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
-      WINE_VER="3.13.0"
+      WINE_VER="3.14.0"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
