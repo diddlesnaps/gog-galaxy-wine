@@ -1,7 +1,4 @@
 name: gog-galaxy-wine
-version: latest
-version-script: |
-  cat $SNAPCRAFT_STAGE/version
 summary: GOG Galaxy
 description: >
   The gaming Client designed for a convenient purchasing, playing and updating
@@ -19,9 +16,10 @@ description: >
   and/or "Pause ro end any process on the system") to grant extra permissions
   for the application. Though all the games tested so far do not need these
   permissions.
-
 grade: stable
 confinement: strict
+adopt-info: gog-galaxy
+
 architectures:
   - build-on: amd64
   - build-on: i386
@@ -122,12 +120,14 @@ parts:
     build-packages:
       - dpkg
       - wget
+    override-pull: |
+      true
     override-build: |
       snapcraftctl build
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
-      WINE_VER="3.14.0"
+      WINE_VER="3.16.0"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
@@ -262,6 +262,8 @@ parts:
         # Required for authentication - Observed in Steam and Track Mania
         - winbind:i386
         - samba-libs:i386
+    override-pull: |
+      true
     override-build: |
       snapcraftctl build
       rm -rf $SNAPCRAFT_PART_INSTALL/etc/init
@@ -303,11 +305,16 @@ parts:
       - wget               # winetricks
       - yad                # winetricks
       - x11-xserver-utils  # for xrandr to set virtual desktop
+    override-pull: |
+      snapcraftctl pull
+
+      wget --quiet "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -O winetricks
+      chmod +x winetricks
+
+      wget --quiet https://www.gog.com/galaxy -O - | grep 'https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy.*.exe' | head -n1 | sed -E -e 's|^.*"https://content-system\.gog\.com/open_link/download\?path=/open/galaxy/client/setup_galaxy_(.*)\.exe".*$|\1|' > version
+      snapcraftctl set-version "$(cat version)"
     override-build: |
       snapcraftctl build
-
-      wget --quiet "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -O $SNAPCRAFT_PART_INSTALL/winetricks
-      chmod +x $SNAPCRAFT_PART_INSTALL/winetricks
 
       rm -rf $SNAPCRAFT_PART_INSTALL/etc/init
       rm -rf $SNAPCRAFT_PART_INSTALL/etc/init.d
@@ -339,10 +346,3 @@ parts:
       rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/pkgconfig
     after:
       - enable-i386
-
-  gog-galaxy-version:
-    plugin: nil
-    build-packages:
-      - wget
-    override-build: |
-      wget --quiet https://www.gog.com/galaxy -O - | grep 'https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy.*.exe' | head -n1 | sed -E -e 's|^.*"https://content-system\.gog\.com/open_link/download\?path=/open/galaxy/client/setup_galaxy_(.*)\.exe".*$|\1|' > $SNAPCRAFT_PART_INSTALL/version
