@@ -1,0 +1,5 @@
+#!/bin/sh
+
+. "$SNAP/bin/snap-utils.sh"
+
+enforce_gog_symlink

@@ -26,13 +26,16 @@ architectures:
 
 apps:
   gog-galaxy-wine:
-    command: env INSTALL_URL="https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_$(cat $SNAP/version).exe"
-      $SNAP/bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
+    command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
     environment:
+      INSTALL_URL: "https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_${SNAP_VERSION}.exe"
       TRICKS: "corefonts vcrun2015 win7"
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
       DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
       LC_ALL: "C.UTF-8"
+      SNAP_TITLE: "GOG Galaxy"
+      SNAP_ICON: "$SNAP/meta/gui/gog-galaxy.png"
+      SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
     plugs:
       - desktop
       - desktop-legacy
@@ -44,25 +47,7 @@ apps:
       - opengl
       - process-control
       - pulseaudio
-      - wayland
-      - x11
-  communication:
-    command: bin/sommelier "$WINEPREFIX/drive_c/users/Public/GOG.com/Galaxy/redists/GalaxyCommunication.exe"
-    environment:
-      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
-      LC_ALL: "C.UTF-8"
-    plugs:
-      - desktop
-      - desktop-legacy
-      - hardware-observe
-      - home
-      - joystick
-      - network
-      - network-bind
-      - opengl
-      - process-control
-      - pulseaudio
+      - screen-inhibit-control
       - wayland
       - x11
   wineboot:
@@ -127,7 +112,7 @@ parts:
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
-      WINE_VER="3.17.0"
+      WINE_VER="3.20.0"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
@@ -165,6 +150,8 @@ parts:
     build-attributes:
       - no-system-libraries
     stage-packages:
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-plugins-bad
       ### Depends from wine-devel-${SNAP_ARCH}_3.9.0~xenial_${SNAP_ARCH}.deb debian/control
       - libasound2
       #- libc6
@@ -214,6 +201,8 @@ parts:
       - winbind
       - samba-libs
       - on amd64:
+        - gstreamer1.0-plugins-good:i386
+        - gstreamer1.0-plugins-bad:i386
         ### Depends from wine-devel-i386_3.9.0~xenial_i386.deb debian/control
         - libasound2:i386
         - libc6:i386
@@ -288,6 +277,7 @@ parts:
       - no-system-libraries
     source: scripts
     organize:
+      'snap-*': bin/
       'sommelier': bin/
       'winetricks': bin/
       'zenity': bin/
@@ -300,6 +290,7 @@ parts:
       - libnotify4         # yad
       - libnotify-bin      # sommelier
       - perl-base          # winetricks
+      - rsync
       - shared-mime-info
       - unzip              # winetricks
       - wget               # winetricks
