@@ -105,14 +105,12 @@ parts:
     build-packages:
       - dpkg
       - wget
-    override-pull: |
-      true
     override-build: |
       snapcraftctl build
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
-      WINE_VER="3.20.0"
+      WINE_VER="3.21.0"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
@@ -251,8 +249,6 @@ parts:
         # Required for authentication - Observed in Steam and Track Mania
         - winbind:i386
         - samba-libs:i386
-    override-pull: |
-      true
     override-build: |
       snapcraftctl build
       rm -rf $SNAPCRAFT_PART_INSTALL/etc/init

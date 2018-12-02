@@ -4,9 +4,16 @@
 
 enforce_gog_symlink
 
-if [ $? = 1 ] && [ -e "$SNAP_USER_COMMON/.wine/drive_c/Program Files (x86)/GOG Galaxy/unins000.exe" ]; then
-    env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINEPREFIX}/drive_c/Program Files (x86)/GOG Galaxy/unins000.exe" /silent
-    exec "$0" "$@"
-fi
+if [ $? = 1 ]; then
+    UNINST_EXE=""
+    if [ -e "$SNAP_USER_COMMON/.wine/drive_c/Program Files (x86)/GOG Galaxy/unins000.exe" ]; then
+        UNINST_EXE="$SNAP_USER_COMMON/.wine/drive_c/Program Files (x86)/GOG Galaxy/unins000.exe"
+    elif [ -e "$SNAP_USER_COMMON/.wine/drive_c/Program Files/GOG Galaxy/unins000.exe" ]; then
+        UNINST_EXE="$SNAP_USER_COMMON/.wine/drive_c/Program Files/GOG Galaxy/unins000.exe"
+    fi
 
-env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINEPREFIX}/drive_c/ProgramData/GOG.com/Galaxy/redists/GalaxyCommunication.exe"
+    if [ -n "$UNINST_EXE" ]; then
+        env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${UNINST_EXE}" /silent
+        exec "$0" "$@"
+    fi
+fi
