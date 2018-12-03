@@ -32,7 +32,6 @@ apps:
       TRICKS: "corefonts vcrun2015 win7"
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
       DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
-      LC_ALL: "C.UTF-8"
       SNAP_TITLE: "GOG Galaxy"
       SNAP_ICON: "$SNAP/meta/gui/gog-galaxy.png"
       SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
@@ -195,6 +194,7 @@ parts:
       - libxrender1
       - libxslt1.1
       - libxxf86vm1
+      - locales-all
       # Required for authentication - Observed in Steam and Track Mania
       - winbind
       - samba-libs
@@ -278,7 +278,7 @@ parts:
       'winetricks': bin/
       'zenity': bin/
     build-packages:
-      - wget
+      - curl
     stage-packages:
       - cabextract         # winetricks
       - libgdk-pixbuf2.0-0 # yad
@@ -295,10 +295,10 @@ parts:
     override-pull: |
       snapcraftctl pull
 
-      wget --quiet "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -O winetricks
+      curl --silent --show-error --location "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -o winetricks
       chmod +x winetricks
 
-      wget --quiet https://www.gog.com/galaxy -O - | grep 'https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy.*.exe' | head -n1 | sed -E -e 's|^.*"https://content-system\.gog\.com/open_link/download\?path=/open/galaxy/client/setup_galaxy_(.*)\.exe".*$|\1|' > version
+      curl --silent --show-error --location https://www.gog.com/galaxy | grep 'https://content-system\.gog\.com/open_link/download?path=/open/galaxy/client/setup_galaxy.*\.exe' | head -n1 | sed -E -e 's|^.*"https://content-system\.gog\.com/open_link/download\?path=/open/galaxy/client/setup_galaxy_(.*)\.exe".*$|\1|' > version
       snapcraftctl set-version "$(cat version)"
     override-build: |
       snapcraftctl build
