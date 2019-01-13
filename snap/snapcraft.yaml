@@ -27,9 +27,10 @@ architectures:
 apps:
   gog-galaxy-wine:
     command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
+    desktop: usr/share/applications/gog-galaxy-wine.desktop
     environment:
       INSTALL_URL: "https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_${SNAP_VERSION}.exe"
-      TRICKS: "corefonts vcrun2015 win7"
+      TRICKS: "corefonts vcrun2017 win10"
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
       DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
       SNAP_TITLE: "GOG Galaxy"
@@ -85,6 +86,13 @@ apps:
       - x11
 
 parts:
+  desktop:
+    plugin: dump
+    source: desktop
+    organize:
+      gog-galaxy.png: usr/share/icons/gog-galaxy.png
+      gog-galaxy-wine.desktop: usr/share/applications/gog-galaxy-wine.desktop
+
   enable-i386:
     plugin: nil
     build-attributes:
@@ -108,18 +116,18 @@ parts:
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
-      WINE_VER="3.21.0"
+      WINE_VER="4.0~rc6"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
-      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/pool/main/${WINE_REL}_${WINE_VER}~xenial_${ARCH}.deb"
+      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/dists/xenial/main/binary-amd64/${WINE_REL}_${WINE_VER}~xenial_${ARCH}.deb"
 
       ## wine loaders - this one is the native system architecture
-      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/${WINE_REL}-${ARCH}_${WINE_VER}~xenial_${ARCH}.deb"
+      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/dists/xenial/main/binary-amd64/${WINE_REL}-${ARCH}_${WINE_VER}~xenial_${ARCH}.deb"
 
       if [ "$ARCH" = "amd64" ]; then
         ## on amd64 builds we need to also bundle the i386 wine loaders
-        DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/pool/main/${WINE_REL}-i386_${WINE_VER}~xenial_i386.deb"
+        DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/dists/xenial/main/binary-i386/${WINE_REL}-i386_${WINE_VER}~xenial_i386.deb"
       fi
 
       for DEB_URL in ${DEB_URLS}; do

@@ -17,3 +17,5 @@ if [ $? = 1 ]; then
         exec "$0" "$@"
     fi
 fi
+
+env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "$WINEPREFIX/drive_c/ProgramData/GOG.com/Galaxy/redists/GalaxyCommunication.exe" &

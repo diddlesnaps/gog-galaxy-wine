@@ -5,6 +5,7 @@ enforce_gog_symlink() {
             rsync -av "$PUBLICDIR/" "$WINEPREFIX/drive_c/ProgramData/"
             rm -rf "$PUBLICDIR"
         fi
+        mkdir -p "$(dirname "$PUBLICDIR")"
         ln -sf "../ProgramData" "$PUBLICDIR"
         return 1
     fi
