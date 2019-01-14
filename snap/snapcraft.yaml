@@ -120,10 +120,10 @@ parts:
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
-      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/dists/xenial/main/binary-amd64/${WINE_REL}_${WINE_VER}~xenial_${ARCH}.deb"
+      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/dists/xenial/main/binary-${ARCH}/${WINE_REL}_${WINE_VER}~xenial_${ARCH}.deb"
 
       ## wine loaders - this one is the native system architecture
-      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/dists/xenial/main/binary-amd64/${WINE_REL}-${ARCH}_${WINE_VER}~xenial_${ARCH}.deb"
+      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/dists/xenial/main/binary-${ARCH}/${WINE_REL}-${ARCH}_${WINE_VER}~xenial_${ARCH}.deb"
 
       if [ "$ARCH" = "amd64" ]; then
         ## on amd64 builds we need to also bundle the i386 wine loaders
