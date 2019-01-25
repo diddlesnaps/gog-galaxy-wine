@@ -19,3 +19,4 @@ if [ $? = 1 ]; then
 fi
 
 env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "$WINEPREFIX/drive_c/ProgramData/GOG.com/Galaxy/redists/GalaxyCommunication.exe" &
+sleep 2

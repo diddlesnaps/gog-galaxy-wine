@@ -115,8 +115,8 @@ parts:
       snapcraftctl build
 
       ARCH="$(dpkg --print-architecture)"
-      WINE_REL="wine-devel"
-      WINE_VER="4.0~rc6"
+      WINE_REL="wine-stable"
+      WINE_VER="4.0"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
