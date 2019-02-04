@@ -154,8 +154,6 @@ parts:
     build-attributes:
       - no-system-libraries
     stage-packages:
-      - gstreamer1.0-plugins-good
-      - gstreamer1.0-plugins-bad
       ### Depends from wine-devel-${SNAP_ARCH}_3.9.0~xenial_${SNAP_ARCH}.deb debian/control
       - libasound2
       #- libc6
@@ -206,8 +204,6 @@ parts:
       - winbind
       - samba-libs
       - on amd64:
-        - gstreamer1.0-plugins-good:i386
-        - gstreamer1.0-plugins-bad:i386
         ### Depends from wine-devel-i386_3.9.0~xenial_i386.deb debian/control
         - libasound2:i386
         - libc6:i386
