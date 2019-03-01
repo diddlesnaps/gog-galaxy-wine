@@ -95,8 +95,6 @@ parts:
 
   enable-i386:
     plugin: nil
-    build-attributes:
-      - no-system-libraries
     override-build: |
       snapcraftctl build
       if [ "$SNAPCRAFT_ARCH_TRIPLET" = "x86_64-linux-gnu" ]; then
@@ -106,8 +104,6 @@ parts:
 
   wine:
     plugin: nil
-    build-attributes:
-      - no-system-libraries
     build-packages:
       - dpkg
       - wget
@@ -151,8 +147,6 @@ parts:
 
   wine-runtime:
     plugin: nil
-    build-attributes:
-      - no-system-libraries
     stage-packages:
       ### Depends from wine-devel-${SNAP_ARCH}_3.9.0~xenial_${SNAP_ARCH}.deb debian/control
       - libasound2
@@ -272,8 +266,6 @@ parts:
 
   gog-galaxy:
     plugin: dump
-    build-attributes:
-      - no-system-libraries
     source: scripts
     organize:
       'snap-*': bin/
