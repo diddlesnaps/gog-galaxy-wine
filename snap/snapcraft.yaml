@@ -138,11 +138,12 @@ parts:
 
       # Organise and cleanup
       cp -a ${SNAPCRAFT_PART_INSTALL}/opt/${WINE_REL}/* ${SNAPCRAFT_PART_INSTALL}/
-      rm -rf ${SNAPCRAFT_PART_INSTALL}/opt
-      rm -rf ${SNAPCRAFT_PART_INSTALL}/share/applications
-      rm -rf ${SNAPCRAFT_PART_INSTALL}/share/man
-      rm -rf ${SNAPCRAFT_PART_INSTALL}/usr/share/doc
-      rm -rf ${SNAPCRAFT_PART_INSTALL}/usr/share/lintian
+    stage:
+      - -opt
+      - -share/applications
+      - -share/man
+      - -usr/share/doc
+      - -usr/share/lintian
     after:
       - enable-i386
 
@@ -247,21 +248,20 @@ parts:
         # Required for authentication - Observed in Steam and Track Mania
         - winbind:i386
         - samba-libs:i386
-    override-build: |
-      snapcraftctl build
-      rm -rf $SNAPCRAFT_PART_INSTALL/etc/init
-      rm -rf $SNAPCRAFT_PART_INSTALL/etc/init.d
-      rm -rf $SNAPCRAFT_PART_INSTALL/etc/logrotate.d
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/apps
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/applications
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/bug
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/doc
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/doc-base
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/debhelper
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/lintian
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/man
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/pixmaps
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/pkgconfig
+    stage:
+      - -etc/init
+      - -etc/init.d
+      - -etc/logrotate.d
+      - -usr/share/apps
+      - -usr/share/applications
+      - -usr/share/bug
+      - -usr/share/doc
+      - -usr/share/doc-base
+      - -usr/share/debhelper
+      - -usr/share/lintian
+      - -usr/share/man
+      - -usr/share/pixmaps
+      - -usr/share/pkgconfig
     after:
       - enable-i386
 
@@ -296,36 +296,34 @@ parts:
 
       curl --silent --show-error --location https://www.gog.com/galaxy | grep 'https://content-system\.gog\.com/open_link/download?path=/open/galaxy/client/setup_galaxy.*\.exe' | head -n1 | sed -E -e 's|^.*"https://content-system\.gog\.com/open_link/download\?path=/open/galaxy/client/setup_galaxy_(.*)\.exe".*$|\1|' > version
       snapcraftctl set-version "$(cat version)"
-    override-build: |
-      snapcraftctl build
-
-      rm -rf $SNAPCRAFT_PART_INSTALL/etc/init
-      rm -rf $SNAPCRAFT_PART_INSTALL/etc/init.d
-      rm -rf $SNAPCRAFT_PART_INSTALL/etc/logrotate.d
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/bin/fc-*
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/bin/gtk-*
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/lib/dconf/dconf-service
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/lib/glib-networking/glib-pacrunner
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/GConf
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/aclocal
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/apport
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/apps
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/bash-completion
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/bug
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/debhelper
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/doc
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/doc-base
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/icons/Adwaita
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/icons/Humanity*
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/icons/LoginIcons
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/icons/ubuntu-mono*
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/info
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/kde4
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/lintian
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/menu
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/man
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/perl5
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/pixmaps
-      rm -rf $SNAPCRAFT_PART_INSTALL/usr/share/pkgconfig
+    stage:
+      - -etc/init
+      - -etc/init.d
+      - -etc/logrotate.d
+      - -usr/bin/fc-*
+      - -usr/bin/gtk-*
+      - -usr/lib/dconf/dconf-service
+      - -usr/lib/glib-networking/glib-pacrunner
+      - -usr/share/GConf
+      - -usr/share/aclocal
+      - -usr/share/apport
+      - -usr/share/apps
+      - -usr/share/bash-completion
+      - -usr/share/bug
+      - -usr/share/debhelper
+      - -usr/share/doc
+      - -usr/share/doc-base
+      - -usr/share/icons/Adwaita
+      - -usr/share/icons/Humanity*
+      - -usr/share/icons/LoginIcons
+      - -usr/share/icons/ubuntu-mono*
+      - -usr/share/info
+      - -usr/share/kde4
+      - -usr/share/lintian
+      - -usr/share/menu
+      - -usr/share/man
+      - -usr/share/perl5
+      - -usr/share/pixmaps
+      - -usr/share/pkgconfig
     after:
       - enable-i386
