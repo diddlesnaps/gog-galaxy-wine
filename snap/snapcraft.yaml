@@ -34,6 +34,7 @@ apps:
       TRICKS: "corefonts vcrun2017 win10"
       WINEPREFIX: "$SNAP_USER_COMMON/.wine"
       DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
+      LC_ALL: "C.UTF-8"
       SNAP_TITLE: "GOG Galaxy"
       SNAP_ICON: "$SNAP/meta/gui/gog-galaxy.png"
       SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
@@ -113,7 +114,11 @@ parts:
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
+<<<<<<< Updated upstream
       WINE_VER="4.4"
+=======
+      WINE_VER="3.18.0"
+>>>>>>> Stashed changes
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
@@ -150,7 +155,13 @@ parts:
   wine-runtime:
     plugin: nil
     stage-packages:
+<<<<<<< Updated upstream
       ### Depends from wine-devel-${SNAP_ARCH}_3.9.0~bionic_${SNAP_ARCH}.deb debian/control
+=======
+      - gstreamer1.0-plugins-good
+      - gstreamer1.0-plugins-bad
+      ### Depends from wine-devel-${SNAP_ARCH}_3.9.0~xenial_${SNAP_ARCH}.deb debian/control
+>>>>>>> Stashed changes
       - libasound2
       #- libc6
       - libglib2.0-0
@@ -200,7 +211,13 @@ parts:
       - winbind
       - samba-libs
       - on amd64:
+<<<<<<< Updated upstream
         ### Depends from wine-devel-i386_3.9.0~bionic_i386.deb debian/control
+=======
+        - gstreamer1.0-plugins-good:i386
+        - gstreamer1.0-plugins-bad:i386
+        ### Depends from wine-devel-i386_3.9.0~xenial_i386.deb debian/control
+>>>>>>> Stashed changes
         - libasound2:i386
         - libc6:i386
         - libglib2.0-0:i386
