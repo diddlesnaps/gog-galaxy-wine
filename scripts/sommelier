@@ -408,11 +408,7 @@ fi
 # Initialise wine
 if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
   # Splash
-<<<<<<< Updated upstream
   yad --timeout=90 --timeout-indicator=bottom --text="${NOTICE}" --image="${SNAP_ICON}" --no-escape --width=460 --no-buttons --splash &
-=======
-  yad --timeout=15 --timeout-indicator=bottom --text="${NOTICE}" --image="${SNAP_ICON}" --no-escape --width=460 --center --no-buttons --splash &
->>>>>>> Stashed changes
   # Create the WINE environment
   env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" wineboot --init 2>&1 | \
   yad --progress --title="Preparing Windows environment" --width=400 --center --no-buttons --auto-close --auto-kill --pulsate
