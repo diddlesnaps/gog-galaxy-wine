@@ -161,8 +161,6 @@ fi
 # # We need to handle that case and reset $SNAP
 SNAP="${SNAP//\/var\/lib\/snapd}"
 
-export GTK_MODULES=""
-
 if [ -n "${DLLOVERRIDES}" ]; then
   export WINEDLLOVERRIDES="${DLLOVERRIDES}"
 fi
@@ -224,6 +222,7 @@ fi
 
 # Tell libGL where to find the drivers
 export LIBGL_DRIVERS_PATH="$SNAP/usr/lib/$ARCH/dri"
+export LIBVA_DRIVERS_PATH="$SNAP/usr/lib/$ARCH/dri"
 
 [ "$SNAP_ARCH" = "amd64" ] && append_dir LIBGL_DRIVERS_PATH "$SNAP/usr/lib/i386-linux-gnu/dri"
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
@@ -345,9 +344,9 @@ fi
 # needed for gtk and qt icon
 if [ $needs_update = true ]; then
   rm -rf "$XDG_DATA_HOME/mime"
-  if [ ! -f "$RUNTIME/usr/share/mime/mime.cache" ]; then
+  if [ ! -f "$SNAP/usr/share/mime/mime.cache" ]; then
     if command -v update-mime-database >/dev/null; then
-      cp --preserve=timestamps -dR "$RUNTIME/usr/share/mime $XDG_DATA_HOME"
+      cp --preserve=timestamps -dR "$SNAP/usr/share/mime $XDG_DATA_HOME"
       update-mime-database "$XDG_DATA_HOME/mime"
     fi
   fi
@@ -374,10 +373,10 @@ if [ $needs_update = true ]; then
         if [ ! -d "$theme_dir" ]; then
           mkdir -p "$theme_dir"
           ln -s "$theme"/* "$theme_dir"
-          if [ -f "$RUNTIME/usr/sbin/update-icon-caches" ]; then
-            "$RUNTIME/usr/sbin/update-icon-caches" "$theme_dir"
-          elif [ -f "$RUNTIME/usr/sbin/update-icon-cache.gtk2" ]; then
-            "$RUNTIME/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
+          if [ -f "$SNAP/usr/sbin/update-icon-caches" ]; then
+            "$SNAP/usr/sbin/update-icon-caches" "$theme_dir"
+          elif [ -f "$SNAP/usr/sbin/update-icon-cache.gtk2" ]; then
+            "$SNAP/usr/sbin/update-icon-cache.gtk2" "$theme_dir"
           fi
         fi
       fi
@@ -395,6 +394,24 @@ for f in ${gtk_configs[@]}; do
     ln -s "$REALHOME/.config/$f $dest"
   fi
 done
+
+if [ "$wayland_available" = true ]; then
+  export GDK_BACKEND="wayland"
+  export CLUTTER_BACKEND="wayland"
+  # Does not hurt to specify this as well, just in case
+  export QT_QPA_PLATFORM=wayland-egl
+fi
+append_dir GTK_PATH $SNAP/usr/lib/$ARCH/gtk-3.0
+
+# ibus and fcitx integration
+GTK_IM_MODULE_DIR=$XDG_CACHE_HOME/immodules
+export GTK_IM_MODULE_FILE=$GTK_IM_MODULE_DIR/immodules.cache
+if [ $needs_update = true ]; then
+  rm -rf $GTK_IM_MODULE_DIR
+  mkdir -p $GTK_IM_MODULE_DIR
+  ln -s $SNAP/usr/lib/$ARCH/gtk-3.0/3.0.0/immodules/*.so $GTK_IM_MODULE_DIR
+  $SNAP/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0 > $GTK_IM_MODULE_FILE
+fi
 
 # Don't Stop wine from updating $WINEPREFIX automatically
 if [ -f "${WINEPREFIX}/.update-timestamp" ]; then
