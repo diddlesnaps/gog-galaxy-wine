@@ -39,6 +39,7 @@ apps:
       SNAP_ICON: "$SNAP/meta/gui/gog-galaxy.png"
       SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
     plugs:
+      - bluez
       - desktop
       - desktop-legacy
       - hardware-observe
@@ -104,6 +105,22 @@ parts:
         apt update
       fi
 
+  dxvk:
+    plugin: dump
+    source: https://github.com/doitsujin/dxvk/releases/download/v1.2/dxvk-1.2.tar.gz
+    override-pull: |
+      DOWNLOAD_URL="$(curl --silent https://api.github.com/repos/doitsujin/dxvk/releases/latest | jq .assets[0].browser_download_url | sed -e 's/"//g')"
+      if [ -n "$DOWNLOAD_URL" ]; then
+        curl --silent -L "$DOWNLOAD_URL" | tar zx --strip-components=1
+      fi
+    build-packages:
+      - curl
+      - jq
+    organize:
+      setup_dxvk.sh: dxvk/setup_dxvk.sh
+      x32: dxvk/x32
+      x64: dxvk/x64
+
   wine:
     plugin: nil
     build-packages:
@@ -114,7 +131,7 @@ parts:
 
       ARCH="$(dpkg --print-architecture)"
       WINE_REL="wine-devel"
-      WINE_VER="4.7"
+      WINE_VER="4.8"
 
       # wget and dpkg extract the wine debs
       ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture

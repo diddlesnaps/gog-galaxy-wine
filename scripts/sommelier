@@ -157,10 +157,6 @@ if [ -n "${INSTALL_URL}" ]; then
   INSTALL_EXE="$(basename "${INSTALL_URL}")"
 fi
 
-# On Fedora $SNAP is under /var and there is some magic to map it to /snap.
-# # We need to handle that case and reset $SNAP
-SNAP="${SNAP//\/var\/lib\/snapd}"
-
 if [ -n "${DLLOVERRIDES}" ]; then
   export WINEDLLOVERRIDES="${DLLOVERRIDES}"
 fi
@@ -189,7 +185,16 @@ export WINETRICKS="$SNAP/bin/winetricks"
 export WINEPATH="$SNAP/bin/winepath"
 export WINEPREFIX="$SNAP_USER_COMMON/.wine"
 
-#export WINEDEBUG=-all
+if [ -n "${WINEDEBUG}" ]; then
+  export WINEDEBUG="-all"
+fi
+
+if [ -n "${DXVK_LOG_LEVEL}" ]; then
+  export DXVK_LOG_LEVEL="none"
+fi
+
+export DXVK_CONFIG_FILE="$SNAP_USER_COMMON/dxvk.conf"
+
 export LD_LIBRARY_PATH="$SNAP/lib/$ARCH:$SNAP/lib:$SNAP/usr/lib/$ARCH:$SNAP/usr/lib"
 if [ "$SNAP_ARCH" = "amd64" ]; then
   append_dir LD_LIBRARY_PATH "$SNAP/lib64"
@@ -338,11 +343,9 @@ if [ $needs_update = true ]; then
     ln -sf "$SNAP/usr/share/themes" "$XDG_DATA_HOME"
     ln -sfn "$SNAP/usr/share/themes" "$SNAP_USER_DATA/.themes"
   fi
-fi
 
-# Build mime.cache
-# needed for gtk and qt icon
-if [ $needs_update = true ]; then
+  # Build mime.cache
+  # needed for gtk and qt icon
   rm -rf "$XDG_DATA_HOME/mime"
   if [ ! -f "$SNAP/usr/share/mime/mime.cache" ]; then
     if command -v update-mime-database >/dev/null; then
@@ -360,10 +363,8 @@ if [ $needs_update = true ]; then
   if [ -f "$SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
     "$SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" > "$GDK_PIXBUF_MODULE_FILE"
   fi
-fi
 
-# Icon themes cache
-if [ $needs_update = true ]; then
+  # Icon themes cache
   rm -rf "$XDG_DATA_HOME/icons"
   mkdir -p "$XDG_DATA_HOME/icons"
   for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do

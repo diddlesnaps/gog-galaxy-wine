@@ -3,3 +3,5 @@
 . "$SNAP/bin/snap-utils.sh"
 
 enforce_gog_symlink
+
+env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" $SNAP/dxvk/setup_dxvk.sh
