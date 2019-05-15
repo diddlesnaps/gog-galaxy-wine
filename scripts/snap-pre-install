@@ -4,4 +4,4 @@
 
 enforce_gog_symlink
 
-env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" $SNAP/dxvk/setup_dxvk.sh
+env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" $SNAP/dxvk/setup_dxvk.sh install
