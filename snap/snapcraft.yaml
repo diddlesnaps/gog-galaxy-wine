@@ -238,6 +238,8 @@ parts:
       - ttf-ubuntu-font-family
       - unity-gtk3-module
       - xdg-user-dirs
+      # vulkan
+      - mesa-vulkan-drivers
       - on amd64:
         ### Depends from wine-devel-i386_3.9.0~bionic_i386.deb debian/control
         - libasound2:i386
@@ -302,6 +304,8 @@ parts:
         - libibus-1.0-5:i386
         - libxkbcommon0:i386  # XKB_CONFIG_ROOT
         - unity-gtk3-module:i386
+        # vulkan
+        - mesa-vulkan-drivers:i386
     stage:
       - -etc/init
       - -etc/init.d
