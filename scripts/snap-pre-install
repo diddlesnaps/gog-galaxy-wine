@@ -4,5 +4,6 @@
 
 enforce_gog_symlink
 
+# todo: get dxvk working. also remove duplicated line in snap-pre-start
 # env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" $SNAP/dxvk/setup_dxvk.sh install
 env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" $SNAP/dxvk/setup_dxvk.sh uninstall
