@@ -126,6 +126,7 @@ parts:
       add-apt-repository 'deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/ ./'
     build-packages:
       - software-properties-common
+      - wget
 
   dxvk:
     plugin: dump
