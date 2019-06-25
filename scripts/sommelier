@@ -60,7 +60,7 @@ function install_app() {
   # Install additional requirements via winetricks here
   if [ -n "${TRICKS}" ]; then
     for TRICK in ${TRICKS}; do
-      env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINETRICKS}" --unattended "${TRICK}" | \
+      "${WINETRICKS}" --unattended "${TRICK}" | \
       yad --progress --title="Installing ${TRICK}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
     done
   fi
@@ -72,21 +72,27 @@ function install_app() {
     perl -p -e '$| = 1; s/^.* +([0-9]+%) +([0-9,.]+[GMKB]) +([0-9hms,.]+).*$/\1\n# Downloading... \2 (\3)/' | \
     yad --progress --title="${INSTALL_EXE}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --no-escape
 
-    # Installs the wine application
-    env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${TMPDIR}/${INSTALL_EXE}" /silent
+    LOCAL_INSTALL_EXE="${TMPDIR}/${INSTALL_EXE}"
+  elif [ -n "${INSTALL_EXE}" ]; then
+    LOCAL_INSTALL_EXE="${INSTALL_EXE}"
+  fi
 
+  # Installs the wine application
+  "${WINELOADER}" "${LOCAL_INSTALL_EXE}" /silent
+
+  if [ -n "${INSTALL_URL}" ]; then
     # Removes the cached installer
     rm -v "${TMPDIR}/${INSTALL_EXE}"
+  fi
 
-    if [ -f "$SNAP/bin/snap-post-install" ]; then
-      . "$SNAP/bin/snap-post-install"
-    fi
-    cp "$SNAP/version" "$SNAP_USER_COMMON/version"
+  if [ -f "$SNAP/bin/snap-post-install" ]; then
+    . "$SNAP/bin/snap-post-install"
+  fi
+  cp "$SNAP/version" "$SNAP_USER_COMMON/version"
 
-    # Launch after install.
-    if [ -z "$LAUNCH_AFTER_INSTALL" ] || [ "$LAUNCH_AFTER_INSTALL" != "false" ]; then
-      launch_app
-    fi
+  # Launch after install.
+  if [ -z "$LAUNCH_AFTER_INSTALL" ] || [ "$LAUNCH_AFTER_INSTALL" != "false" ]; then
+    launch_app
   fi
 }
 
@@ -106,10 +112,10 @@ function launch_app() {
     # Creating a virtual desktop the same size will eliminate bugs when
     # switching from fullscreen to windowed mode.
     NATIVE_RES="$(xrandr -q | grep primary | cut -d' ' -f4 | cut -d'+' -f1)"
-    env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" explorer /desktop="virtual,${NATIVE_RES}" "${WINE_EXE}" "${WINE_EXE_ARGS[@]}" &
+    "${WINELOADER}" explorer /desktop="virtual,${NATIVE_RES}" "${WINE_EXE}" "${WINE_EXE_ARGS[@]}" &
     WINEPID=$!
   else
-    env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" "${WINE_EXE}" "${WINE_EXE_ARGS[@]}" &
+    "${WINELOADER}" "${WINE_EXE}" "${WINE_EXE_ARGS[@]}" &
     WINEPID=$!
   fi
 
@@ -152,6 +158,28 @@ else
   exit 1
 fi
 
+if [ -z "${WINEDEBUG}" ]; then
+  export WINEDEBUG="-all"
+fi
+
+if [ -z "${DXVK_LOG_LEVEL}" ]; then
+  export DXVK_LOG_LEVEL="none"
+fi
+
+append_dir PATH "$SNAP/bin"
+append_dir PATH "$SNAP/usr/bin"
+
+append_dir LD_LIBRARY_PATH "$SNAP/lib"
+append_dir LD_LIBRARY_PATH "$SNAP/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "$SNAP/usr/lib"
+append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH"
+append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/samba"
+if [ "$SNAP_ARCH" = "amd64" ]; then
+  append_dir LD_LIBRARY_PATH "$SNAP/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/samba"
+fi
+
 # If we've been given and installer URL derive the filename
 if [ -n "${INSTALL_URL}" ]; then
   INSTALL_EXE="$(basename "${INSTALL_URL}")"
@@ -161,46 +189,42 @@ if [ -n "${DLLOVERRIDES}" ]; then
   export WINEDLLOVERRIDES="${DLLOVERRIDES}"
 fi
 
+WINEVERPATH="$SNAP/usr"
+if [ -d "$SNAP/opt/wine" ]; then
+    WINEVERPATH="$SNAP/opt/wine"
+elif [ -d "$SNAP/opt/wine-devel" ]; then
+    WINEVERPATH="$SNAP/opt/wine-devel"
+fi
+
 if [ "$SNAP_ARCH" = "i386" ] || [ "$FORCE_WIN32" = "true" ]; then
-  export WINEARCH=win32
+    export WINE="wine"
+    export WINEARCH="win32"
+    export WINELOADER="$WINEVERPATH/bin/wine"
+    export WINEDLLPATH="$WINEVERPATH/lib/wine/fakedlls"
+    export ARCH="i386-linux-gnu"
 elif [ "$SNAP_ARCH" = "amd64" ] ; then
-  export WINEARCH=win64
+    export WINE="wine64"
+    export WINEARCH="win64"
+    export WINELOADER="$WINEVERPATH/bin/wine64"
+    export WINEDLLPATH="$WINEVERPATH/lib64/wine/fakedlls"
+    export ARCH="x86_64-linux-gnu"
 fi
 
-if [ "$SNAP_ARCH" = "i386" ]; then
-  export WINE=wine
-  export WINELOADER="$SNAP/bin/wine"
-  export WINEDLLPATH="$SNAP/lib/wine/fakedlls"
-  export ARCH="i386-linux-gnu"
-elif [ "$SNAP_ARCH" = "amd64" ] ; then
-  export WINE=wine64
-  export WINELOADER="$SNAP/bin/wine64"
-  export WINEDLLPATH="$SNAP/lib64/wine/fakedlls"
-  export ARCH="x86_64-linux-gnu"
-fi
-
-export WINEVERPATH="$SNAP"
-export WINESERVER="$SNAP/bin/wineserver"
-export WINETRICKS="$SNAP/bin/winetricks"
-export WINEPATH="$SNAP/bin/winepath"
+export WINESERVER="$WINEVERPATH/bin/wineserver"
+export WINETRICKS="$WINEVERPATH/bin/winetricks"
+export WINEPATH="$WINEVERPATH/bin/winepath"
 export WINEPREFIX="$SNAP_USER_COMMON/.wine"
 
-if [ -n "${WINEDEBUG}" ]; then
-  export WINEDEBUG="-all"
-fi
+# for dxvk installer
+export wine="$WINEVERPATH/bin/wine"
 
-if [ -n "${DXVK_LOG_LEVEL}" ]; then
-  export DXVK_LOG_LEVEL="none"
+append_dir PATH "$WINEVERPATH/bin"
+append_dir LD_LIBRARY_PATH "$WINEVERPATH/lib"
+if [ "$SNAP_ARCH" = "amd64" ]; then
+    append_dir LD_LIBRARY_PATH "$WINEVERPATH/lib64"
 fi
 
 export DXVK_CONFIG_FILE="$SNAP_USER_COMMON/dxvk.conf"
-
-export LD_LIBRARY_PATH="$SNAP/lib/$ARCH:$SNAP/lib:$SNAP/usr/lib/$ARCH:$SNAP/usr/lib"
-if [ "$SNAP_ARCH" = "amd64" ]; then
-  append_dir LD_LIBRARY_PATH "$SNAP/lib64"
-  append_dir LD_LIBRARY_PATH "$SNAP/lib/i386-linux-gnu"
-  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu"
-fi
 
 # XKB config
 export XKB_CONFIG_ROOT="$SNAP/usr/share/X11/xkb"
@@ -211,25 +235,18 @@ export XLOCALEDIR="$SNAP/usr/share/X11/locale"
 
 # Set XCursors path
 export XCURSOR_PATH="$SNAP/usr/share/icons"
-prepend_dir XCURSOR_PATH "$SNAP/data-dir/icons"
-
-# SAMBA Libs for ntlm_auth to function
-append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/samba"
-[ "$SNAP_ARCH" = "amd64" ] && append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/samba"
 
 # Mesa Libs for OpenGL support
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/mesa"
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/mesa-egl"
-if [ "$SNAP_ARCH" = "amd64" ]; then
-  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/mesa"
-  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/mesa-egl"
-fi
 
-# Tell libGL where to find the drivers
+# Tell libGL and libva where to find the drivers
 export LIBGL_DRIVERS_PATH="$SNAP/usr/lib/$ARCH/dri"
 export LIBVA_DRIVERS_PATH="$SNAP/usr/lib/$ARCH/dri"
-
-[ "$SNAP_ARCH" = "amd64" ] && append_dir LIBGL_DRIVERS_PATH "$SNAP/usr/lib/i386-linux-gnu/dri"
+if [ "$SNAP_ARCH" = "amd64" ]; then
+    append_dir LIBGL_DRIVERS_PATH "$SNAP/usr/lib/i386-linux-gnu/dri"
+    append_dir LIBVA_DRIVERS_PATH "$SNAP/usr/lib/i386-linux-gnu/dri"
+fi
 append_dir LD_LIBRARY_PATH "$LIBGL_DRIVERS_PATH"
 
 # Workaround in snapd for proprietary nVidia drivers mounts the drivers in
@@ -240,7 +257,9 @@ append_dir LD_LIBRARY_PATH /var/lib/snapd/lib/gl
 
 # Pulseaudio export
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/pulseaudio"
-[ "$SNAP_ARCH" = "amd64" ] && append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/pulseaudio"
+if [ "$SNAP_ARCH" = "amd64" ]; then
+    append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/pulseaudio"
+fi
 
 # EGL vendor files on glvnd enabled systems
 [ -d /var/lib/snapd/lib/glvnd/egl_vendor.d ] && \
@@ -249,6 +268,10 @@ append_dir __EGL_VENDOR_LIBRARY_DIRS /var/lib/snapd/lib/glvnd/egl_vendor.d
 # Tell GStreamer where to find its plugins
 export GST_PLUGIN_PATH="$SNAP/usr/lib/$ARCH/gstreamer-1.0"
 export GST_PLUGIN_SYSTEM_PATH="$SNAP/usr/lib/$ARCH/gstreamer-1.0"
+if [ "$ARCH" = "amd64" ]; then
+    append_dir GST_PLUGIN_PATH "$SNAP/usr/lib/i386-linux-gnu/gstreamer-1.0"
+    append_dir GST_PLUGIN_SYSTEM_PATH "$SNAP/usr/lib/i386-linux-gnu/gstreamer-1.0"
+fi
 # gst plugin scanner doesn't install in the correct path: https://github.com/ubuntu/snapcraft-desktop-helpers/issues/43
 export GST_PLUGIN_SCANNER="$SNAP/usr/lib/$ARCH/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner"
 
@@ -258,7 +281,6 @@ prepend_dir XDG_CONFIG_DIRS "$SNAP/etc/xdg"
 # Define snaps' own data dir
 prepend_dir XDG_DATA_DIRS "$SNAP/usr/share"
 prepend_dir XDG_DATA_DIRS "$SNAP/share"
-prepend_dir XDG_DATA_DIRS "$SNAP/data-dir"
 prepend_dir XDG_DATA_DIRS "$SNAP_USER_COMMON"
 
 export HOME="$SNAP_USER_COMMON"
@@ -285,6 +307,26 @@ mkdir -p "$XDG_CONFIG_HOME"
 # Ensure the app finds locale definitions (requires locales-all to be installed)
 append_dir LOCPATH "$SNAP/usr/lib/locale"
 
+# If detect wayland server socket, then set environment so applications prefer
+# wayland, and setup compat symlink (until we use user mounts. Remember,
+# XDG_RUNTIME_DIR is /run/user/<uid>/snap.$SNAP so look in the parent directory
+# for the socket. For details:
+# https://forum.snapcraft.io/t/wayland-dconf-and-xdg-runtime-dir/186/10
+if [[ -n "$XDG_RUNTIME_DIR" && -z "$DISABLE_WAYLAND" ]]; then
+    wdisplay="wayland-0"
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        wdisplay="$WAYLAND_DISPLAY"
+    fi
+    wayland_sockpath="$XDG_RUNTIME_DIR/../$wdisplay"
+    wayland_snappath="$XDG_RUNTIME_DIR/$wdisplay"
+    if [ -S "$wayland_sockpath" ]; then
+        # create the compat symlink for now
+        if [ ! -e "$wayland_snappath" ]; then
+            ln -s "$wayland_sockpath" "$wayland_snappath"
+        fi
+    fi
+fi
+
 # Make PulseAudio socket available inside the snap-specific $XDG_RUNTIME_DIR
 if [ -n "$XDG_RUNTIME_DIR" ]; then
     pulsenative="pulse/native"
@@ -298,7 +340,7 @@ fi
 IFS=':' read -r -a data_dirs_array <<< "$XDG_DATA_DIRS"
 
 # Font Config and themes
-export FONTCONFIG_PATH="$SNAP/etc/fonts/conf.d"
+export FONTCONFIG_PATH="$SNAP/etc/fonts"
 export FONTCONFIG_FILE="$SNAP/etc/fonts/fonts.conf"
 
 function make_user_fontconfig {
@@ -309,9 +351,9 @@ function make_user_fontconfig {
   if [ -d "$REALHOME/.fonts" ]; then
     echo "  <dir>$REALHOME/.fonts</dir>"
   fi
-  for d in "${data_dirs_array[@]}"; do
-    if [ -d "$d/fonts" ]; then
-      echo "  <dir>$d/fonts</dir>"
+  for ((i = 0; i < ${#data_dirs_array[@]}; i++)); do
+    if [ -d "${data_dirs_array[$i]}/fonts" ]; then
+      echo "  <dir>${data_dirs_array[$i]}/fonts</dir>"
     fi
   done
   echo '  <include ignore_missing="yes">conf.d</include>'
@@ -325,7 +367,7 @@ function make_user_fontconfig {
   echo "</fontconfig>"
 }
 
-if [ $needs_update = true ]; then
+if [ "$needs_update" = true ]; then
   rm -rf "$XDG_DATA_HOME"/{fontconfig,fonts,fonts-*,themes,.themes}
 
   # This fontconfig fragment is installed in a location that is
@@ -334,22 +376,12 @@ if [ $needs_update = true ]; then
   mkdir -p "$XDG_CONFIG_HOME/fontconfig"
   make_user_fontconfig > "$XDG_CONFIG_HOME/fontconfig/fonts.conf"
 
-  # the themes symlink are needed for GTK 3.18 when the prefix isn't changed
-  # GTK 3.20 looks into XDG_DATA_DIR which has connected themes.
-  if [ -d "$SNAP/data-dir/themes" ]; then
-    ln -sf "$SNAP/data-dir/themes" "$XDG_DATA_HOME"
-    ln -sfn "$SNAP/data-dir/themes" "$SNAP_USER_DATA/.themes"
-  else
-    ln -sf "$SNAP/usr/share/themes" "$XDG_DATA_HOME"
-    ln -sfn "$SNAP/usr/share/themes" "$SNAP_USER_DATA/.themes"
-  fi
-
   # Build mime.cache
   # needed for gtk and qt icon
   rm -rf "$XDG_DATA_HOME/mime"
   if [ ! -f "$SNAP/usr/share/mime/mime.cache" ]; then
     if command -v update-mime-database >/dev/null; then
-      cp --preserve=timestamps -dR "$SNAP/usr/share/mime $XDG_DATA_HOME"
+      cp --preserve=timestamps -dR "$SNAP/usr/share/mime" "$XDG_DATA_HOME"
       update-mime-database "$XDG_DATA_HOME/mime"
     fi
   fi
@@ -357,7 +389,6 @@ fi
 
 # Gdk-pixbuf loaders
 export GDK_PIXBUF_MODULE_FILE="$XDG_CACHE_HOME/gdk-pixbuf-loaders.cache"
-export GDK_PIXBUF_MODULEDIR="$SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/2.10.0/loaders"
 if [ $needs_update = true ]; then
   rm -f "$GDK_PIXBUF_MODULE_FILE"
   if [ -f "$SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
@@ -400,18 +431,20 @@ if [ "$wayland_available" = true ]; then
   export GDK_BACKEND="wayland"
   export CLUTTER_BACKEND="wayland"
   # Does not hurt to specify this as well, just in case
-  export QT_QPA_PLATFORM=wayland-egl
+  export QT_QPA_PLATFORM="wayland-egl"
 fi
-append_dir GTK_PATH $SNAP/usr/lib/$ARCH/gtk-3.0
 
 # ibus and fcitx integration
-GTK_IM_MODULE_DIR=$XDG_CACHE_HOME/immodules
-export GTK_IM_MODULE_FILE=$GTK_IM_MODULE_DIR/immodules.cache
-if [ $needs_update = true ]; then
-  rm -rf $GTK_IM_MODULE_DIR
-  mkdir -p $GTK_IM_MODULE_DIR
-  ln -s $SNAP/usr/lib/$ARCH/gtk-3.0/3.0.0/immodules/*.so $GTK_IM_MODULE_DIR
-  $SNAP/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0 > $GTK_IM_MODULE_FILE
+GTK_IM_MODULE_DIR="$XDG_CACHE_HOME/immodules"
+export GTK_IM_MODULE_FILE="$GTK_IM_MODULE_DIR/immodules.cache"
+if [ "$needs_update" = true ]; then
+  rm -rf "$GTK_IM_MODULE_DIR"
+  mkdir -p "$GTK_IM_MODULE_DIR"
+  ln -sf "$SNAP/usr/lib/$ARCH/gtk-3.0/3.0.0/immodules/"*.so "$GTK_IM_MODULE_DIR"
+  if [ "$SNAP_ARCH" = "amd64" ]; then
+    ln -sf "$SNAP/usr/lib/i386-linux-gnu/gtk-3.0/3.0.0/immodules/"*.so "$GTK_IM_MODULE_DIR"
+  fi
+  "$SNAP/usr/lib/$ARCH/libgtk-3-0/gtk-query-immodules-3.0" > "$GTK_IM_MODULE_FILE"
 fi
 
 # Don't Stop wine from updating $WINEPREFIX automatically
@@ -428,7 +461,7 @@ if [ ! -f "${WINEPREFIX}/drive_c/windows/win.ini" ]; then
   # Splash
   yad --timeout=90 --timeout-indicator=bottom --text="${NOTICE}" --image="${SNAP_ICON}" --no-escape --width=460 --no-buttons --splash &
   # Create the WINE environment
-  env WINEARCH="${WINEARCH}" WINEPREFIX="${WINEPREFIX}" "${WINELOADER}" wineboot --init 2>&1 | \
+  "${WINELOADER}" wineboot --init 2>&1 | \
   yad --progress --title="Preparing Windows environment" --width=400 --center --no-buttons --auto-close --auto-kill --pulsate
   # Opt out of winetricks metrics - we ninja this to avoid dialogs
   if [ ! -f "${XDG_CACHE_HOME}/winetricks/track_usage" ]; then
@@ -444,8 +477,12 @@ fi
 
 # Launch wineboot/winecfg/winetricks if requested.
 # If the executable exists then launch it otherwise install it then lauch it.
-if [[ "${WINE_EXE}" = *"winecfg"* ]] || [[ "${WINE_EXE}" = *"wineboot"* ]] || [[ "${WINE_EXE}" = *"winetricks"* ]]; then
-  "${WINE_EXE}" "$@"
+if [[ "${WINE_EXE}" = *"winecfg"* ]] ||
+[[ "${WINE_EXE}" = *"wineboot"* ]] ||
+[[ "${WINE_EXE}" = *"winetricks"* ]] ||
+[[ "${WINE_EXE}" = *"winedbg"* ]] ||
+[[ "${WINE_EXE}" = *"setup_dxvk.sh"* ]]; then
+  "${WINE_EXE}" "${WINE_EXE_ARGS[@]}"
 elif [ ! -e "${WINE_EXE}" ] || [ ! -f "$SNAP_USER_COMMON/version" ] || vercomp "$(cat "$SNAP_USER_COMMON/version")" "$(cat "$SNAP/version")"; then
   install_app
 else

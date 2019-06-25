@@ -1,4 +1,5 @@
 name: gog-galaxy-wine
+icon: desktop/icon.png
 summary: GOG Galaxy
 description: >
   The gaming Client designed for a convenient purchasing, playing and updating
@@ -25,19 +26,41 @@ architectures:
   - build-on: amd64
   - build-on: i386
 
+layout:
+  /usr/share/libdrm:
+    bind: $SNAP/usr/share/libdrm
+
+environment:
+  INSTALL_URL: "https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_${SNAP_VERSION}.exe"
+  TRICKS: "corefonts vcrun2017 win10"
+  WINEPREFIX: "$SNAP_USER_COMMON/.wine"
+  DLLOVERRIDES: "mscoree=,mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
+  LC_ALL: "C.UTF-8"
+  SNAP_TITLE: "GOG Galaxy"
+  SNAP_ICON: "$SNAP/usr/share/icons/gog-galaxy.png"
+  SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
+
 apps:
   gog-galaxy-wine:
     command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
-    desktop: usr/share/applications/gog-galaxy-wine.desktop
-    environment:
-      INSTALL_URL: "https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_${SNAP_VERSION}.exe"
-      TRICKS: "corefonts vcrun2017 win10"
-      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
-      LC_ALL: "C.UTF-8"
-      SNAP_TITLE: "GOG Galaxy"
-      SNAP_ICON: "$SNAP/meta/gui/gog-galaxy.png"
-      SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
+    desktop: usr/share/applications/desktop.desktop
+    plugs:
+      - bluez
+      - desktop
+      - desktop-legacy
+      - hardware-observe
+      - home
+      - joystick
+      - network
+      - network-bind
+      - opengl
+      - process-control
+      - pulseaudio
+      - screen-inhibit-control
+      - wayland
+      - x11
+  enable-dxvk:
+    command: bin/sommelier $SNAP/dxvk/setup_dxvk.sh install --without-dxgi
     plugs:
       - bluez
       - desktop
@@ -55,9 +78,6 @@ apps:
       - x11
   wineboot:
     command: bin/sommelier $SNAP/bin/wineboot
-    environment:
-      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
     plugs:
       - desktop
       - desktop-legacy
@@ -66,9 +86,6 @@ apps:
       - x11
   winecfg:
     command: bin/sommelier $SNAP/bin/winecfg
-    environment:
-      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
     plugs:
       - desktop
       - desktop-legacy
@@ -77,9 +94,6 @@ apps:
       - x11
   winetricks:
     command: bin/sommelier $SNAP/bin/winetricks prefix="$WINEPREFIX"
-    environment:
-      WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-      DLLOVERRIDES: "mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
     plugs:
       - desktop
       - desktop-legacy
@@ -93,17 +107,25 @@ parts:
     plugin: dump
     source: desktop
     organize:
-      gog-galaxy.png: usr/share/icons/gog-galaxy.png
-      gog-galaxy-wine.desktop: usr/share/applications/gog-galaxy-wine.desktop
+      icon.png: usr/share/icons/icon.png
+      desktop.desktop: usr/share/applications/desktop.desktop
 
-  enable-i386:
+  add-repos:
     plugin: nil
     override-build: |
-      snapcraftctl build
       if [ "$SNAPCRAFT_ARCH_TRIPLET" = "x86_64-linux-gnu" ]; then
         dpkg --add-architecture i386
         apt update
       fi
+      wget -nc https://dl.winehq.org/wine-builds/winehq.key
+      wget -nc https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key
+      apt-key add winehq.key
+      apt-key add Release.key
+      rm -f winehq.key Release.key
+      add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ bionic main'
+      add-apt-repository 'deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/ ./'
+    build-packages:
+      - software-properties-common
 
   dxvk:
     plugin: dump
@@ -121,191 +143,44 @@ parts:
       x32: dxvk/x32
       x64: dxvk/x64
 
-  wine:
-    plugin: nil
-    build-packages:
-      - dpkg
-      - wget
-    override-build: |
-      snapcraftctl build
-
-      ARCH="$(dpkg --print-architecture)"
-      WINE_REL="wine-devel"
-      WINE_VER="4.8"
-
-      # wget and dpkg extract the wine debs
-      ## supporting binaries which are arch-specific but the same filenames in both architectures so we only install the native architecture
-      DEB_URLS="https://dl.winehq.org/wine-builds/ubuntu/dists/bionic/main/binary-${ARCH}/${WINE_REL}_${WINE_VER}~bionic_${ARCH}.deb"
-
-      ## wine loaders - this one is the native system architecture
-      DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/dists/bionic/main/binary-${ARCH}/${WINE_REL}-${ARCH}_${WINE_VER}~bionic_${ARCH}.deb"
-
-      if [ "$ARCH" = "amd64" ]; then
-        ## on amd64 builds we need to also bundle the i386 wine loaders
-        DEB_URLS="$DEB_URLS https://dl.winehq.org/wine-builds/ubuntu/dists/bionic/main/binary-i386/${WINE_REL}-i386_${WINE_VER}~bionic_i386.deb"
-      fi
-
-      for DEB_URL in ${DEB_URLS}; do
-        DEB=$(basename "${DEB_URL}")
-        echo "Downloading ${DEB_URL}..."
-        wget --quiet "${DEB_URL}" -O "${SNAPCRAFT_PART_INSTALL}/${DEB}"
-        echo "Unpacking ${DEB}..."
-        dpkg -x "${SNAPCRAFT_PART_INSTALL}/${DEB}" ${SNAPCRAFT_PART_INSTALL}
-        rm -f "${SNAPCRAFT_PART_INSTALL}/${DEB}"
-      done
-
-      # Organise and cleanup
-      cp -a ${SNAPCRAFT_PART_INSTALL}/opt/${WINE_REL}/* ${SNAPCRAFT_PART_INSTALL}/
-    stage:
-      - -opt
-      - -share/applications
-      - -share/man
-      - -usr/share/doc
-      - -usr/share/lintian
-    after:
-      - enable-i386
-
   wine-runtime:
     plugin: nil
     stage-packages:
-      ### Depends from wine-devel-${SNAP_ARCH}_3.9.0~bionic_${SNAP_ARCH}.deb debian/control
-      - libasound2
-      - libasound2-plugins
-      - libglib2.0-0
-      - libgphoto2-6
-      - gstreamer1.0-plugins-base
-      - libgstreamer-plugins-base1.0-0
-      - liblcms2-2
-      - libldap-2.4-2
-      - libmpg123-0
-      - libncurses5
-      - libopenal1
-      - libpcap0.8
-      - libpulse0
-      - libudev1
-      - libxext6
-      - libxml2
-      - zlib1g
-      ### Recommends from wine-devel-${SNAP_ARCH}_3.9.0~bionic_${SNAP_ARCH}.deb debian/control
-      - libcups2
-      - libdbus-1-3
-      - libfontconfig1
-      - libfreetype6
-      - libgif7
-      - libglu1-mesa
-      - libgnutls30
-      - libgpg-error0
-      - libgsm1
-      - libgssapi-krb5-2
-      - libjpeg8
-      - libodbc1
-      - libosmesa6
-      - libpng16-16
-      - libsane
-      - libsdl2-2.0-0
-      - libsqlite3-0
-      - libtiff5
-      - libva2
-      - libv4l-0
-      - libvulkan1
-      - libxcomposite1
-      - libxcursor1
-      - libxfixes3
-      - libxi6
-      - libxinerama1
-      - libxrandr2
-      - libxrender1
-      - libxslt1.1
-      - libxxf86vm1
-      - locales-all
-      - va-driver-all
-      # Required for authentication - Observed in Steam and Track Mania
-      - samba-libs
-      - winbind
-      # GTK 3
-      - adwaita-icon-theme
-      - dmz-cursor-theme
-      - gnome-themes-standard
-      - ibus-gtk3
-      - libappindicator3-1
+      # gtk
       - libgdk-pixbuf2.0-0
       - libgtk-3-0
       - libgtk-3-bin
-      - libibus-1.0-5
-      - libxkbcommon0  # XKB_CONFIG_ROOT
-      - light-themes
+      # miscellaneous desktop stuff
+      - adwaita-icon-theme
+      - dmz-cursor-theme
+      - gnome-themes-standard
       - shared-mime-info
       - ttf-ubuntu-font-family
-      - unity-gtk3-module
-      - xdg-user-dirs
-      # vulkan
+      ## Required for authentication - Observed in Steam and Track Mania
+      - samba-libs
+      - winbind
+      # vaapi
+      - libva2
+      - va-driver-all
+      ## opengl
+      - libglu1-mesa
+      # - mesa-utils
+      ## vulkan
+      - libvulkan1
       - mesa-vulkan-drivers
+      # - vulkan-utils
+      ## wine
+      - wine-devel
       - on amd64:
-        ### Depends from wine-devel-i386_3.9.0~bionic_i386.deb debian/control
-        - libasound2:i386
-        - libasound2-plugins:i386
-        - libc6:i386
-        - libglib2.0-0:i386
-        - libgphoto2-6:i386
-        - gstreamer1.0-plugins-base:i386
-        - libgstreamer-plugins-base1.0-0:i386
-        - liblcms2-2:i386
-        - libldap-2.4-2:i386
-        - libmpg123-0:i386
-        - libncurses5:i386
-        - libopenal1:i386
-        - libpcap0.8:i386
-        - libpulse0:i386
-        - libudev1:i386
-        - libxext6:i386
-        - libxml2:i386
-        - zlib1g:i386
-        ### Recommends from wine-devel-i386_3.9.0~bionic_i386.deb debian/control
-        - libcups2:i386
-        - libdbus-1-3:i386
-        - libfontconfig1:i386
-        - libfreetype6:i386
-        - libgif7:i386
-        - libglu1-mesa:i386
-        - libgnutls30:i386
-        - libgpg-error0:i386
-        - libgsm1:i386
-        - libgssapi-krb5-2:i386
-        - libjpeg8:i386
-        - libodbc1:i386
-        - libosmesa6:i386
-        - libpng16-16:i386
-        - libsane:i386
-        - libsdl2-2.0-0:i386
-        - libsqlite3-0:i386
-        - libtiff5:i386
-        - libv4l-0:i386
-        - libva2:i386
-        - libvulkan1:i386
-        - libxcomposite1:i386
-        - libxcursor1:i386
-        - libxfixes3:i386
-        - libxi6:i386
-        - libxinerama1:i386
-        - libxrandr2:i386
-        - libxrender1:i386
-        - libxslt1.1:i386
-        - libxxf86vm1:i386
-        - va-driver-all:i386
-        # Required for authentication - Observed in Steam and Track Mania
-        - samba-libs:i386
-        - winbind:i386
-        # GTK 3
-        - ibus-gtk3:i386
-        - libappindicator3-1:i386
         - libgdk-pixbuf2.0-0:i386
         - libgtk-3-0:i386
         - libgtk-3-bin:i386
-        - libibus-1.0-5:i386
-        - libxkbcommon0:i386  # XKB_CONFIG_ROOT
-        - unity-gtk3-module:i386
-        # vulkan
-        - mesa-vulkan-drivers:i386
+        - samba-libs:i386
+        - winbind:i386
+        - libva2:i386
+        - va-driver-all:i386
+        - libglu1-mesa:i386
+        - libvulkan1:i386
     stage:
       - -etc/init
       - -etc/init.d
@@ -321,7 +196,7 @@ parts:
       - -usr/share/pixmaps
       - -usr/share/pkgconfig
     after:
-      - enable-i386
+      - add-repos
 
   gog-galaxy:
     plugin: dump
@@ -384,4 +259,4 @@ parts:
       - -usr/share/pixmaps
       - -usr/share/pkgconfig
     after:
-      - enable-i386
+      - add-repos
