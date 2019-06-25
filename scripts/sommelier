@@ -146,7 +146,7 @@ function append_dir() {
 if [ -n "${1}" ]; then
   WINE_EXE="${1}"
   if [ "$SNAP_ARCH" = "amd64" ]; then
-    WINE_EXE="${WINE_EXE/"Program Files"/"Program Files (x86)"}"
+    WINE_EXE="${WINE_EXE/"/Program Files/"/"/Program Files (x86)/"}"
   fi
 
   WINE_DIR="$(dirname "${WINE_EXE}")"
@@ -154,7 +154,7 @@ if [ -n "${1}" ]; then
   shift
   WINE_EXE_ARGS=( "$@" )
 else
-  echo "ERROR! I need an executable that I should launch. Exitting here."
+  echo "ERROR! I need an executable that I should launch. Exiting here."
   exit 1
 fi
 
@@ -168,17 +168,6 @@ fi
 
 append_dir PATH "$SNAP/bin"
 append_dir PATH "$SNAP/usr/bin"
-
-append_dir LD_LIBRARY_PATH "$SNAP/lib"
-append_dir LD_LIBRARY_PATH "$SNAP/lib/$ARCH"
-append_dir LD_LIBRARY_PATH "$SNAP/usr/lib"
-append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH"
-append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/samba"
-if [ "$SNAP_ARCH" = "amd64" ]; then
-  append_dir LD_LIBRARY_PATH "$SNAP/lib/i386-linux-gnu"
-  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu"
-  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/samba"
-fi
 
 # If we've been given and installer URL derive the filename
 if [ -n "${INSTALL_URL}" ]; then
@@ -219,6 +208,16 @@ export WINEPREFIX="$SNAP_USER_COMMON/.wine"
 export wine="$WINEVERPATH/bin/wine"
 
 append_dir PATH "$WINEVERPATH/bin"
+
+export LD_LIBRARY_PATH="$SNAP/lib:$SNAP/lib/$ARCH:/lib:/lib/$ARCH:$SNAP/usr/lib:$SNAP/usr/lib/$ARCH:/usr/lib:/usr/lib/$ARCH:$SNAP/usr/lib/$ARCH/samba"
+if [ "$SNAP_ARCH" = "amd64" ]; then
+  append_dir LD_LIBRARY_PATH "$SNAP/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "/usr/lib/i386-linux-gnu"
+  append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/i386-linux-gnu/samba"
+fi
+
 append_dir LD_LIBRARY_PATH "$WINEVERPATH/lib"
 if [ "$SNAP_ARCH" = "amd64" ]; then
     append_dir LD_LIBRARY_PATH "$WINEVERPATH/lib64"
