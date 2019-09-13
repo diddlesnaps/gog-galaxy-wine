@@ -34,7 +34,7 @@ environment:
   INSTALL_URL: "https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_${SNAP_VERSION}.exe"
   TRICKS: "corefonts vcrun2017 win10"
   WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-  DLLOVERRIDES: "mscoree=,mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
+  DLLOVERRIDES: "mscoree,mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
   LC_ALL: "C.UTF-8"
   SNAP_TITLE: "GOG Galaxy"
   SNAP_ICON: "$SNAP/usr/share/icons/gog-galaxy.png"
