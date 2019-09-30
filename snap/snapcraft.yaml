@@ -45,6 +45,7 @@ apps:
     command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
     desktop: usr/share/applications/desktop.desktop
     plugs:
+      - audio-playback
       - bluez
       - desktop
       - desktop-legacy
