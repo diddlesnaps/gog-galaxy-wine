@@ -200,7 +200,7 @@ elif [ "$SNAP_ARCH" = "amd64" ] ; then
 fi
 
 export WINESERVER="$WINEVERPATH/bin/wineserver"
-export WINETRICKS="$WINEVERPATH/bin/winetricks"
+export WINETRICKS="$SNAP/bin/winetricks"
 export WINEPATH="$WINEVERPATH/bin/winepath"
 export WINEPREFIX="$SNAP_USER_COMMON/.wine"
 
