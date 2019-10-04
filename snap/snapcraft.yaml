@@ -57,6 +57,7 @@ apps:
       - opengl
       - process-control
       - pulseaudio
+      - removable-media
       - screen-inhibit-control
       - wayland
       - x11
@@ -67,19 +68,16 @@ apps:
       - desktop
       - desktop-legacy
       - hardware-observe
-      - home
       - joystick
       - network
-      - network-bind
       - opengl
-      - process-control
       - pulseaudio
-      - screen-inhibit-control
       - wayland
       - x11
   wineboot:
     command: bin/sommelier $SNAP/bin/wineboot
     plugs:
+      - audio-playback
       - desktop
       - desktop-legacy
       - pulseaudio
@@ -88,6 +86,7 @@ apps:
   winecfg:
     command: bin/sommelier $SNAP/bin/winecfg
     plugs:
+      - audio-playback
       - desktop
       - desktop-legacy
       - pulseaudio
@@ -96,6 +95,7 @@ apps:
   winetricks:
     command: bin/sommelier $SNAP/bin/winetricks prefix="$WINEPREFIX"
     plugs:
+      - audio-playback
       - desktop
       - desktop-legacy
       - network
