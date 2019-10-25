@@ -1,15 +1,13 @@
 <h1 align="center">
-  <img src="images/banner-icon.png" alt="Project">
+  <img src="images/banner-icon.png" alt="GOG Galaxy">
   <br />
-  Gog Galaxy
+  GOG Galaxy
 </h1>
 
-<p align="center"><b>This is the snap for Gog Galaxy</b>, <i>"Gaming library for GOG.com. DRM-free games."</i>. It works on Ubuntu, Fedora, Debian, and other major linux distributions.</p>
+<p align="center"><b>This is the snap for GOG Galaxy</b>, <i>"Gaming library for GOG.com. DRM-free games."</i>. It works on Ubuntu, Fedora, Debian, and other major Linux
+distributions.</p>
 
-<p align="center">
-<a href="https://build.snapcraft.io/user/diddlesnaps/gog-galaxy-wine"><img src="https://build.snapcraft.io/badge/diddlesnaps/gog-galaxy-wine.svg" alt="Snap Status"></a>
-</p>
-
+[![Snap Status](https://build.snapcraft.io/badge/diddlesnaps/gog-galaxy-wine.svg)](https://build.snapcraft.io/user/diddlesnaps/gog-galaxy-wine)
 
 ## Install
 
@@ -19,7 +17,7 @@
 
 ![gog-galaxy-wine](snapcrafter-assets/screenshot.png?raw=true "Gog Galaxy")
 
-<p align="center">Published for <img src="http://anything.codes/slack-emoji-for-techies/emoji/tux.png" align="top" width="24" /> with :gift_heart: by Snapcrafters</p>
+<p align="center">Published for <img src="https://raw.githubusercontent.com/anythingcodes/slack-emoji-for-techies/gh-pages/emoji/tux.png" align="top" width="24" /> with :gift_heart: by Snapcrafters</p>
 
 ## Drescription
 
@@ -49,7 +47,7 @@ upstream so [Project] can authoritatively publish future releases.
   - [x] Fork the [Snapcrafters template](https://github.com/snapcrafters/fork-and-rename-me) repository to your own GitHub account.
     - If you have already forked the Snapcrafter template to your account and want to create another snap, you'll need to use GitHub's [Import repository](https://github.com/new/import) feature because you can only fork a repository once.
   - [x] Rename the forked Snapcrafters template repository
-  - [ ] Update the description of the repository
+  - [x] Update the description of the repository
   - [x] Update logos and references to `[Project]` and `[my-snap-name]`
   - [x] Create a snap that runs in `devmode`
   - [x] Register the snap in the store, **using the preferred upstream name**
