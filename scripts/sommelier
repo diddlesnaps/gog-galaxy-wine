@@ -422,7 +422,7 @@ for f in ${gtk_configs[@]}; do
   dest="$XDG_CONFIG_HOME/$f"
   if [ ! -L "$dest" ]; then
     mkdir -p "$(dirname $dest)"
-    ln -s "$REALHOME/.config/$f $dest"
+    ln -s "$REALHOME/.config/$f" "$dest"
   fi
 done
 
