@@ -235,7 +235,7 @@ export XLOCALEDIR="$SNAP/usr/share/X11/locale"
 # Set XCursors path
 export XCURSOR_PATH="$SNAP/usr/share/icons"
 
-SYSTEM_WGETRC="$SNAP/etc/wgetrc"
+export SYSTEM_WGETRC="$SNAP/etc/wgetrc"
 
 # Mesa Libs for OpenGL support
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/mesa"
