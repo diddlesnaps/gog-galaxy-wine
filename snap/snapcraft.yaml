@@ -112,22 +112,6 @@ parts:
       - software-properties-common
       - wget
 
-  dxvk:
-    plugin: dump
-    source: https://github.com/doitsujin/dxvk/releases/download/v1.2/dxvk-1.2.tar.gz
-    override-pull: |
-      DOWNLOAD_URL="$(curl --silent https://api.github.com/repos/doitsujin/dxvk/releases/latest | jq .assets[0].browser_download_url | sed -e 's/"//g')"
-      if [ -n "$DOWNLOAD_URL" ]; then
-        curl --silent -L "$DOWNLOAD_URL" | tar zx --strip-components=1
-      fi
-    build-packages:
-      - curl
-      - jq
-    organize:
-      setup_dxvk.sh: dxvk/setup_dxvk.sh
-      x32: dxvk/x32
-      x64: dxvk/x64
-
   wine-runtime:
     plugin: nil
     stage-packages:
