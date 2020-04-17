@@ -36,7 +36,7 @@ environment:
   WINEPREFIX: "$SNAP_USER_COMMON/.wine"
   DLLOVERRIDES: "mscoree,mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
   LC_ALL: "C.UTF-8"
-  SNAP_TITLE: "GOG Galaxy"
+  SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
   SNAP_ICON: "$SNAP/usr/share/icons/gog-galaxy.png"
   SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
 
@@ -56,22 +56,8 @@ apps:
       - network-bind
       - opengl
       - process-control
-      - pulseaudio
       - removable-media
       - screen-inhibit-control
-      - wayland
-      - x11
-  enable-dxvk:
-    command: bin/sommelier $SNAP/dxvk/setup_dxvk.sh install --without-dxgi
-    plugs:
-      - bluez
-      - desktop
-      - desktop-legacy
-      - hardware-observe
-      - joystick
-      - network
-      - opengl
-      - pulseaudio
       - wayland
       - x11
   wineboot:
@@ -80,7 +66,6 @@ apps:
       - audio-playback
       - desktop
       - desktop-legacy
-      - pulseaudio
       - wayland
       - x11
   winecfg:
@@ -89,7 +74,6 @@ apps:
       - audio-playback
       - desktop
       - desktop-legacy
-      - pulseaudio
       - wayland
       - x11
   winetricks:
@@ -99,7 +83,6 @@ apps:
       - desktop
       - desktop-legacy
       - network
-      - pulseaudio
       - wayland
       - x11
 

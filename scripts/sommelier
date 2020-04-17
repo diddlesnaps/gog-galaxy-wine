@@ -24,6 +24,11 @@ fi
 # Set $REALHOME to the users real home directory
 REALHOME="$(getent passwd $UID | cut -d ':' -f 6)"
 
+# Enable esync if $ENABLE_ESYNC is set to true
+if [ "$ENABLE_ESYNC" = "true" ]; then
+  export WINEESYNC=1 
+fi
+
 # https://stackoverflow.com/questions/4023830/how-to-compare-two-strings-in-dot-separated-version-format-in-bash
 vercomp() {
     if [[ $1 == $2 ]]
@@ -60,9 +65,16 @@ function install_app() {
   # Install additional requirements via winetricks here
   if [ -n "${TRICKS}" ]; then
     for TRICK in ${TRICKS}; do
-      "${WINETRICKS}" --unattended "${TRICK}" | \
+      "${WINETRICKS}" --unattended prefix="$WINEPREFIX" "${TRICK}" | \
       yad --progress --title="Installing ${TRICK}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
     done
+  fi
+
+  # Install DXVK if ENABLE_DXVK is set to true
+  if [ "$ENABLE_DXVK" = "true" ]; then
+    TRICK='dxvk'
+    "${WINETRICKS}" --unattended prefix="$WINEPREFIX" "${TRICK}" | \
+    yad --progress --title="Installing ${TRICK}" --width=400 --center --no-buttons --auto-close --auto-kill --on-top --pulsate
   fi
 
   # Modify or remove this as required by your application.
@@ -88,7 +100,10 @@ function install_app() {
   if [ -f "$SNAP/bin/snap-post-install" ]; then
     . "$SNAP/bin/snap-post-install"
   fi
-  cp "$SNAP/version" "$SNAP_USER_COMMON/version"
+
+  if [ -f "$SNAP/version" ]; then
+    cp "$SNAP/version" "$SNAP_USER_COMMON/version"
+  fi
 
   # Launch after install.
   if [ -z "$LAUNCH_AFTER_INSTALL" ] || [ "$LAUNCH_AFTER_INSTALL" != "false" ]; then
@@ -178,11 +193,14 @@ if [ -n "${DLLOVERRIDES}" ]; then
   export WINEDLLOVERRIDES="${DLLOVERRIDES}"
 fi
 
-WINEVERPATH="$SNAP/usr"
-if [ -d "$SNAP/opt/wine" ]; then
-    WINEVERPATH="$SNAP/opt/wine"
+if [ -x "$SNAP/bin/wine" ]; then
+  WINEVERPATH="$SNAP"
+elif [ -x "$SNAP/usr/bin/wine" ]; then
+  WINEVERPATH="$SNAP/usr"
+elif [ -d "$SNAP/opt/wine" ]; then
+  WINEVERPATH="$SNAP/opt/wine"
 elif [ -d "$SNAP/opt/wine-devel" ]; then
-    WINEVERPATH="$SNAP/opt/wine-devel"
+  WINEVERPATH="$SNAP/opt/wine-devel"
 fi
 
 if [ "$SNAP_ARCH" = "i386" ] || [ "$FORCE_WIN32" = "true" ]; then
@@ -228,14 +246,14 @@ export DXVK_CONFIG_FILE="$SNAP_USER_COMMON/dxvk.conf"
 # XKB config
 export XKB_CONFIG_ROOT="$SNAP/usr/share/X11/xkb"
 
+export SYSTEM_WGETRC="$SNAP/etc/wgetrc"
+
 # Give XOpenIM a chance to locate locale data.
 # This is required for text input to work in SDL2 games.
 export XLOCALEDIR="$SNAP/usr/share/X11/locale"
 
 # Set XCursors path
 export XCURSOR_PATH="$SNAP/usr/share/icons"
-
-export SYSTEM_WGETRC="$SNAP/etc/wgetrc"
 
 # Mesa Libs for OpenGL support
 append_dir LD_LIBRARY_PATH "$SNAP/usr/lib/$ARCH/mesa"
@@ -390,6 +408,7 @@ fi
 
 # Gdk-pixbuf loaders
 export GDK_PIXBUF_MODULE_FILE="$XDG_CACHE_HOME/gdk-pixbuf-loaders.cache"
+export GDK_PIXBUF_MODULEDIR="$SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/2.10.0/loaders"
 if [ $needs_update = true ]; then
   rm -f "$GDK_PIXBUF_MODULE_FILE"
   if [ -f "$SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders" ]; then
@@ -478,13 +497,9 @@ fi
 
 # Launch wineboot/winecfg/winetricks if requested.
 # If the executable exists then launch it otherwise install it then lauch it.
-if [[ "${WINE_EXE}" = *"winecfg"* ]] ||
-[[ "${WINE_EXE}" = *"wineboot"* ]] ||
-[[ "${WINE_EXE}" = *"winetricks"* ]] ||
-[[ "${WINE_EXE}" = *"winedbg"* ]] ||
-[[ "${WINE_EXE}" = *"setup_dxvk.sh"* ]]; then
+if [[ "${WINE_EXE}" = *"winecfg"* ]] || [[ "${WINE_EXE}" = *"wineboot"* ]] || [[ "${WINE_EXE}" = *"winetricks"* ]] || [[ "${WINE_EXE}" = *"winedbg"* ]] || [[ "${WINE_EXE}" = *"setup_dxvk.sh"* ]]; then
   "${WINE_EXE}" "${WINE_EXE_ARGS[@]}"
-elif [ ! -e "${WINE_EXE}" ] || [ ! -f "$SNAP_USER_COMMON/version" ] || vercomp "$(cat "$SNAP_USER_COMMON/version")" "$(cat "$SNAP/version")"; then
+elif [ -f "$SNAP/version" ] && vercomp "$(cat "$SNAP_USER_COMMON/version" 2>/dev/null)" "$(cat "$SNAP/version" 2>/dev/null)" || [ ! -e "$WINE_EXE" ]; then
   install_app
 else
   launch_app
