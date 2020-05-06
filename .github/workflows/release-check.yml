@@ -16,8 +16,8 @@ jobs:
           | grep 'https://content-system\.gog\.com/open_link/download?path=/open/galaxy/client/setup_galaxy.*\.exe' \
           | head -n1 \
           | sed -E -e 's|^.*"https://content-system\.gog\.com/open_link/download\?path=/open/galaxy/client/setup_galaxy_(.*)\.exe".*$|\1|')"
-        EDGEVER="$(snap info gog-galaxy-wine | awk '$1 == "latestedge:" { print $2 }')"
-        if [ "$VERSION" != "$EDGEVER" ]; then
+        last="$(tail -n1 .build.stamp | awk '{print $4}')"
+        if [ "$VERSION" != "$last" ]; then
           echo "$(date -u --rfc-3339=seconds) Version $VERSION" >> .build.stamp
         fi
     - uses: stefanzweifel/git-auto-commit-action@v2.1.0
