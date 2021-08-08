@@ -1,9 +1,0 @@
-#!/bin/sh
-
-. "$SNAP/bin/snap-utils.sh"
-
-enforce_gog_symlink
-
-# todo: get dxvk working. also remove duplicated line in snap-pre-start
-# "$SNAP/dxvk/setup_dxvk.sh" install --without-dxgi
-# $SNAP/dxvk/setup_dxvk.sh uninstall

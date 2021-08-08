@@ -1,6 +1,7 @@
 name: gog-galaxy-wine
-icon: desktop/icon.png
+icon: snap/gui/gog-galaxy.png
 summary: GOG Galaxy
+version: '2.0'
 description: >
   The gaming Client designed for a convenient purchasing, playing and updating
   games, as well as an online play between gaming platforms, GOG Galaxy is also
@@ -20,7 +21,6 @@ description: >
 grade: stable
 confinement: strict
 base: core18
-adopt-info: gog-galaxy
 
 architectures:
   - build-on: amd64
@@ -30,202 +30,62 @@ layout:
   /usr/share/libdrm:
     bind: $SNAP/usr/share/libdrm
 
+plugs:
+  wine-runtime:
+    interface: content
+    target: $SNAP/wine-runtime
+    default-provider: wine-platform-runtime
+  wine-6-stable:
+    interface: content
+    target: $SNAP/wine-platform
+    default-provider: wine-platform-6-stable
+
 environment:
-  INSTALL_URL: "https://content-system.gog.com/open_link/download?path=/open/galaxy/client/setup_galaxy_${SNAP_VERSION}.exe"
-  TRICKS: "corefonts vcrun2017 win10"
-  WINEPREFIX: "$SNAP_USER_COMMON/.wine"
-  DLLOVERRIDES: "mscoree,mshtml=" # Prevent pop-ups about Wine Mono and Wine Gecko
-  LC_ALL: "C.UTF-8"
-  SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
-  SNAP_ICON: "$SNAP/usr/share/icons/gog-galaxy.png"
-  SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
+  TRICKS: "corefonts"
+  WINEDLLOVERRIDES: mshtml=
+  SYSTEM_WGETRC: $SNAP/etc/wgetrc
+  # LC_ALL: "C.UTF-8"
+  # SNAP_TITLE: "$SNAPCRAFT_PROJECT_SUMMARY"
+  # SNAP_ICON: "$SNAP/usr/share/icons/gog-galaxy.png"
+  # SNAP_SUPPORT_URL: "https://github.com/diddlesnaps/gog-galaxy-wine/issues"
 
 apps:
   gog-galaxy-wine:
-    command: bin/sommelier "$WINEPREFIX/drive_c/Program Files/GOG Galaxy/GalaxyClient.exe" /runWithoutUpdating
-    desktop: usr/share/applications/desktop.desktop
+    extensions: [gnome-3-28]
+    command: bin/sommelier run-exe
+    environment:
+      RUN_EXE: C:/Program Files (x86)/GOG Galaxy/GalaxyClient.exe
+      INSTALL_URL: https://webinstallers.gog.com/download/GOG_Galaxy_2.0.exe
+      # INSTALL_FLAGS: /silent
     plugs:
-      - audio-playback
       - bluez
-      - desktop
-      - desktop-legacy
       - hardware-observe
       - home
       - joystick
       - network
       - network-bind
+      - network-observe
       - opengl
       - process-control
       - removable-media
       - screen-inhibit-control
-      - wayland
-      - x11
-  wineboot:
-    command: bin/sommelier $SNAP/bin/wineboot
+
+  wine:
+    extensions: [gnome-3-28]
+    command: bin/sommelier
     plugs:
-      - audio-playback
-      - desktop
-      - desktop-legacy
-      - wayland
-      - x11
-  winecfg:
-    command: bin/sommelier $SNAP/bin/winecfg
-    plugs:
-      - audio-playback
-      - desktop
-      - desktop-legacy
-      - wayland
-      - x11
-  winetricks:
-    command: bin/sommelier $SNAP/bin/winetricks prefix="$WINEPREFIX"
-    plugs:
-      - audio-playback
-      - desktop
-      - desktop-legacy
+      - home
       - network
-      - wayland
-      - x11
+
+  winetricks:
+    extensions: [gnome-3-28]
+    command: bin/sommelier winetricks
+    plugs:
+      - home
+      - network
 
 parts:
-  desktop:
-    plugin: dump
-    source: desktop
-    organize:
-      icon.png: usr/share/icons/icon.png
-      desktop.desktop: usr/share/applications/desktop.desktop
-
-  add-repos:
-    plugin: nil
-    override-build: |
-      if [ "$SNAPCRAFT_ARCH_TRIPLET" = "x86_64-linux-gnu" ]; then
-        dpkg --add-architecture i386
-        apt update
-      fi
-      wget -nc https://dl.winehq.org/wine-builds/winehq.key
-      wget -nc https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/Release.key
-      apt-key add winehq.key
-      apt-key add Release.key
-      rm -f winehq.key Release.key
-      add-apt-repository 'deb https://dl.winehq.org/wine-builds/ubuntu/ bionic main'
-      add-apt-repository 'deb https://download.opensuse.org/repositories/Emulators:/Wine:/Debian/xUbuntu_18.04/ ./'
-    build-packages:
-      - software-properties-common
-      - wget
-
-  wine-runtime:
-    plugin: nil
-    stage-packages:
-      # gtk
-      - libgdk-pixbuf2.0-0
-      - libgtk-3-0
-      - libgtk-3-bin
-      # miscellaneous desktop stuff
-      - adwaita-icon-theme
-      - dmz-cursor-theme
-      - gnome-themes-standard
-      - shared-mime-info
-      - ttf-ubuntu-font-family
-      ## Required for authentication - Observed in Steam and Track Mania
-      - samba-libs
-      - winbind
-      # vaapi
-      - libva2
-      - va-driver-all
-      ## opengl
-      - libglu1-mesa
-      # - mesa-utils
-      ## vulkan
-      - libvulkan1
-      - mesa-vulkan-drivers
-      # - vulkan-utils
-      ## wine
-      - wine-devel
-      - on amd64:
-        - libgdk-pixbuf2.0-0:i386
-        - libgtk-3-0:i386
-        - libgtk-3-bin:i386
-        - samba-libs:i386
-        - winbind:i386
-        - libva2:i386
-        - va-driver-all:i386
-        - libglu1-mesa:i386
-        - libvulkan1:i386
-    stage:
-      - -etc/init
-      - -etc/init.d
-      - -etc/logrotate.d
-      - -usr/share/apps
-      - -usr/share/applications
-      - -usr/share/bug
-      - -usr/share/doc
-      - -usr/share/doc-base
-      - -usr/share/debhelper
-      - -usr/share/lintian
-      - -usr/share/man
-      - -usr/share/pixmaps
-      - -usr/share/pkgconfig
-    after:
-      - add-repos
-
-  gog-galaxy:
-    plugin: dump
-    source: scripts
-    organize:
-      'snap-*': bin/
-      'sommelier': bin/
-      'winetricks': bin/
-      'zenity': bin/
-    build-packages:
-      - curl
-    stage-packages:
-      - cabextract         # winetricks
-      - libgdk-pixbuf2.0-0 # yad
-      - libgtk-3-0         # yad
-      - libnotify4         # yad
-      - libnotify-bin      # sommelier
-      - perl-base          # winetricks
-      - rsync
-      - shared-mime-info
-      - unzip              # winetricks
-      - wget               # winetricks
-      - yad                # winetricks
-      - x11-xserver-utils  # for xrandr to set virtual desktop
-    override-pull: |
-      snapcraftctl pull
-
-      curl --silent --show-error --location "https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks" -o winetricks
-      chmod +x winetricks
-
-      curl --silent --show-error --location https://www.gog.com/galaxy | grep 'https://content-system\.gog\.com/open_link/download?path=/open/galaxy/client/setup_galaxy.*\.exe' | head -n1 | sed -E -e 's|^.*"https://content-system\.gog\.com/open_link/download\?path=/open/galaxy/client/setup_galaxy_(.*)\.exe".*$|\1|' > version
-      snapcraftctl set-version "$(cat version)"
-    stage:
-      - -etc/init
-      - -etc/init.d
-      - -etc/logrotate.d
-      - -usr/bin/fc-*
-      - -usr/bin/gtk-*
-      - -usr/lib/dconf/dconf-service
-      - -usr/lib/glib-networking/glib-pacrunner
-      - -usr/share/GConf
-      - -usr/share/aclocal
-      - -usr/share/apport
-      - -usr/share/apps
-      - -usr/share/bash-completion
-      - -usr/share/bug
-      - -usr/share/debhelper
-      - -usr/share/doc
-      - -usr/share/doc-base
-      - -usr/share/icons/Adwaita
-      - -usr/share/icons/Humanity*
-      - -usr/share/icons/LoginIcons
-      - -usr/share/icons/ubuntu-mono*
-      - -usr/share/info
-      - -usr/share/kde4
-      - -usr/share/lintian
-      - -usr/share/menu
-      - -usr/share/man
-      - -usr/share/perl5
-      - -usr/share/pixmaps
-      - -usr/share/pkgconfig
-    after:
-      - add-repos
+  sommelier-core:
+    plugin: make
+    source: https://github.com/snapcrafters/sommelier-core.git
+    source-branch: "1.0"
