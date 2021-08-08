@@ -58,6 +58,8 @@ apps:
       INSTALL_URL: https://webinstallers.gog.com/download/GOG_Galaxy_2.0.exe
       # INSTALL_FLAGS: /silent
     plugs:
+      - audio-playback
+      - audio-record
       - bluez
       - hardware-observe
       - home
