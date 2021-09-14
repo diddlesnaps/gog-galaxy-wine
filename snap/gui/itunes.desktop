@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=iTunes
+Comment=iTunes
+Exec=itunes
+Icon=${SNAP}/meta/gui/gog-galaxy.png
+Categories=AudioVideo;Audio;Video;Player;
+Terminal=false
+StartupNotify=true
+StartupWMClass=iTunes.exe
+Keywords=itunes
